@@ -130,3 +130,28 @@ euroPlayers <- merge(euroPlayers, player_stats, by="Player") %>% .[order(-.$VORP
 write.csv(collegePlayers, file = "college_players.csv", row.names = F)
 write.csv(euroPlayers, file = "euro_players.csv", row.names = F)
 
+collegePlayers$season <- as.numeric(substr(collegePlayers$season, nchar(collegePlayers$season) - 1, nchar(collegePlayers$season)))
+collegePlayers$season <- 2000 + collegePlayers$season
+a <- collegePlayers[!duplicated(collegePlayers$Player), ]
+a$vorpMin <- a$VORP/a$MP
+
+pergame  <- a[complete.cases(a$pts_per_g),]
+permin   <- a[complete.cases(a$pts_per_min),]
+perposs  <- a[complete.cases(a$pts_per_poss),]
+advanced <- a[complete.cases(a$bpm),]
+
+toRunPerGame <- paste0("pergameModel <- rpart(vorpMin ~ ", paste(colnames(a)[c(4:19)], collapse = " + "), ", data = pergame, method = 'class')")
+eval(parse(text = toRunPerGame))
+predPerGame <- predict(pergameModel, newdata = test)
+
+toRunPerMin <- paste0("perminModel <- rpart(vorpMin ~ ", paste(colnames(a)[c(4:34)], collapse = " + "), ", data = permin, method = 'class')")
+eval(parse(text = toRunPerMin))
+predPerMin <- predict(perminModel, newdata = test)
+
+toRunPerPoss <- paste0("perpossModel <- rpart(vorpMin ~ ", paste(colnames(a)[c(4:53)], collapse = " + "), ", data = perposs, method = 'class')")
+eval(parse(text = toRunPerPoss))
+predPerPoss <- predict(perpossModel, newdata = test)
+
+toRunAdvanced <- paste0("advancedModel <- rpart(vorpMin ~ ", paste(colnames(a)[c(4:77)], collapse = " + "), ", data = advanced, method = 'class')")
+eval(parse(text = toRunAdvanced))
+predAdvanced <- predict(advancedModel, newdata = test)
