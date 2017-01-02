@@ -130,28 +130,132 @@ euroPlayers <- merge(euroPlayers, player_stats, by="Player") %>% .[order(-.$VORP
 write.csv(collegePlayers, file = "college_players.csv", row.names = F)
 write.csv(euroPlayers, file = "euro_players.csv", row.names = F)
 
+collegePlayers <- read.csv(file = "college_players.csv", header = T, stringsAsFactors = F)
+euroPlayers <- read.csv(file = "euro_players.csv", header = T, stringsAsFactors = F)
+
 collegePlayers$season <- as.numeric(substr(collegePlayers$season, nchar(collegePlayers$season) - 1, nchar(collegePlayers$season)))
 collegePlayers$season <- 2000 + collegePlayers$season
+collegePlayers <- collegePlayers[order(-collegePlayers$draftYear, collegePlayers$Player, -collegePlayers$season),]
+
 a <- collegePlayers[!duplicated(collegePlayers$Player), ]
 a$vorpMin <- a$VORP/a$MP
+a <- a[order(-a$draftYear, -a$VORP),]
 
-pergame  <- a[complete.cases(a$pts_per_g),]
-permin   <- a[complete.cases(a$pts_per_min),]
-perposs  <- a[complete.cases(a$pts_per_poss),]
-advanced <- a[complete.cases(a$bpm),]
+test <- a %>% filter(draftYear >= 2015)
+train <- a %>% filter(draftYear < 2015)
 
-toRunPerGame <- paste0("pergameModel <- rpart(vorpMin ~ ", paste(colnames(a)[c(4:19)], collapse = " + "), ", data = pergame, method = 'class')")
+pergame  <- train[complete.cases(train$pts_per_g),]
+permin   <- train[complete.cases(train$pts_per_min),]
+perposs  <- train[complete.cases(train$pts_per_poss),]
+advanced <- train[complete.cases(train$bpm),]
+
+pergame$pf_per_g <- NULL
+pergame$tov_per_g <- NULL
+perposs$fg3_pct <- NULL
+advanced$fg3_pct <- NULL
+
+toRunPerGame <- paste0("pergameModel <- randomForest(vorpMin ~ ", paste(colnames(pergame)[c(5:17)], collapse = " + "), ", data = pergame)")
 eval(parse(text = toRunPerGame))
 predPerGame <- predict(pergameModel, newdata = test)
 
-toRunPerMin <- paste0("perminModel <- rpart(vorpMin ~ ", paste(colnames(a)[c(4:34)], collapse = " + "), ", data = permin, method = 'class')")
+toRunPerMin <- paste0("perminModel <- randomForest(vorpMin ~ ", paste(colnames(permin)[c(5:34)], collapse = " + "), ", data = permin)")
 eval(parse(text = toRunPerMin))
 predPerMin <- predict(perminModel, newdata = test)
 
-toRunPerPoss <- paste0("perpossModel <- rpart(vorpMin ~ ", paste(colnames(a)[c(4:53)], collapse = " + "), ", data = perposs, method = 'class')")
+toRunPerPoss <- paste0("perpossModel <- randomForest(vorpMin ~ ", paste(colnames(perposs)[c(5:52)], collapse = " + "), ", data = perposs)")
 eval(parse(text = toRunPerPoss))
 predPerPoss <- predict(perpossModel, newdata = test)
 
-toRunAdvanced <- paste0("advancedModel <- rpart(vorpMin ~ ", paste(colnames(a)[c(4:77)], collapse = " + "), ", data = advanced, method = 'class')")
+toRunAdvanced <- paste0("advancedModel <- randomForest(vorpMin ~ ", paste(colnames(advanced)[c(5:76)], collapse = " + "), ", data = advanced)")
 eval(parse(text = toRunAdvanced))
 predAdvanced <- predict(advancedModel, newdata = test)
+
+
+test$perGamePred <- predPerGame * test$MP
+test$perMinPred  <- predPerMin * test$MP
+test$perPossPred <- predPerPoss * test$MP
+test$AdvancedPred <- predAdvanced * test$MP
+
+
+##Per Game
+bestPerGameCombo <- ""
+bestPerGameRMSE <- 100
+
+for(i in 1:length(colnames(permin)[c(5:17)])) {
+  print(i)
+  t <- combn(colnames(pergame)[c(5:17)], m = i)
+  for(j in 1:ncol(t)) {
+    print(j/ncol(t))
+    toRunPerGame <- paste0("pergameModel <- randomForest(vorpMin ~ ", paste(t[,j], collapse = " + "), ", data = pergame)")
+    eval(parse(text = toRunPerGame))
+    predPerGame <- predict(pergameModel, newdata = test)
+    predPerGame <- predPerGame * test$MP
+    if(RMSE(test$VORP, predPerGame) < bestRMSE) {
+      bestPerGameRMSE <- RMSE(test$VORP, predPerGame)
+      bestPerGameCombo <- toRunPerGame
+    }
+  }
+}
+
+
+##Per Minute
+bestPerMinCombo <- ""
+bestPerMinRMSE <- 100
+
+for(i in 1:length(colnames(permin)[c(5:34)])) {
+  print(i)
+  t <- combn(colnames(permin)[c(5:34)], m = i)
+  for(j in 1:ncol(t)) {
+    print(j/ncol(t))
+    toRunPerMin <- paste0("perminModel <- randomForest(vorpMin ~ ", paste(colnames(permin)[c(5:34)], collapse = " + "), ", data = permin)")
+    eval(parse(text = toRunPerMin))
+    predPerMin <- predict(perminModel, newdata = test)
+    predPerMin <- predPerMin * test$MP
+    if(RMSE(test$VORP, predPerMin) < bestRMSE) {
+      bestPerMinRMSE <- RMSE(test$VORP, predPerMin)
+      bestPerMinCombo <- toRunPerMin
+    }
+  }
+}
+
+
+##Per Possession
+bestPerPossCombo <- ""
+bestPerPossRMSE <- 100
+
+for(i in 1:length(colnames(perposs)[c(5:52)])) {
+  print(i)
+  t <- combn(colnames(perposs)[c(5:52)], m = i)
+  for(j in 1:ncol(t)) {
+    print(j/ncol(t))
+    toRunPerPoss <- paste0("perpossModel <- randomForest(vorpMin ~ ", paste(colnames(perposs)[c(5:52)], collapse = " + "), ", data = perposs)")
+    eval(parse(text = toRunPerPoss))
+    predPerPoss <- predict(perpossModel, newdata = test)
+    predPerPoss <- predPerPoss * test$MP
+    if(RMSE(test$VORP, predPerPoss) < bestRMSE) {
+      bestPerPossRMSE <- RMSE(test$VORP, predPerPoss)
+      bestPerPossCombo <- toRunPerPoss
+    }
+  }
+}
+
+
+##Advanced
+bestAdvancedCombo <- ""
+bestAdvancedRMSE <- 100
+
+for(i in 1:length(colnames(advanced)[c(5:52)])) {
+  print(i)
+  t <- combn(colnames(advanced)[c(5:52)], m = i)
+  for(j in 1:ncol(t)) {
+    print(j/ncol(t))
+    toRunAdvanced <- paste0("advancedModel <- randomForest(vorpMin ~ ", paste(colnames(advanced)[c(5:76)], collapse = " + "), ", data = advanced)")
+    eval(parse(text = toRunAdvanced))
+    predAdvanced <- predict(advancedModel, newdata = test)
+    predAdvanced <- predAdvanced * test$MP
+    if(RMSE(test$VORP, predAdvanced) < bestRMSE) {
+      bestAdvancedRMSE <- RMSE(test$VORP, predAdvanced)
+      bestAdvancedCombo <- toRunAdvanced
+    }
+  }
+}
