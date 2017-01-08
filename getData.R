@@ -3,34 +3,41 @@ library(dplyr)
 library(lubridate)
 library(rvest)
 library(stringi)
+library(randomForest)
 
 source("get_College_Data.R")
 
 options(stringsAsFactors = F)
 
+draftYearToTest <- 2016
+
 player_stats <- data.frame()
 
-for(i in 2015:2010) {
-  temp <- readHTMLTable(paste0("http://www.basketball-reference.com/play-index/psl_finder.cgi?request=1&match=combined&type=totals&per_minute_base=36&per_poss_base=100&lg_id=NBA&is_playoffs=N&year_min=&year_max=&franch_id=&season_start=1&season_end=-1&age_min=0&age_max=99&height_min=0&height_max=99&shoot_hand=&birth_country_is=Y&birth_country=&birth_state=&college_id=&draft_year=", i, "&is_active=&debut_yr_nba_start=&debut_yr_nba_end=&debut_yr_aba_start=&debut_yr_aba_end=&is_hof=&is_as=&as_comp=gt&as_val=&award=&pos_is_g=Y&pos_is_gf=Y&pos_is_f=Y&pos_is_fg=Y&pos_is_fc=Y&pos_is_c=Y&pos_is_cf=Y&qual=&c1stat=&c1comp=gt&c1val=&c2stat=&c2comp=gt&c2val=&c3stat=&c3comp=gt&c3val=&c4stat=&c4comp=gt&c4val=&c5stat=&c5comp=gt&c6mult=1.0&c6stat=&order_by=vorp"))$stats
-  temp <-  temp[-which(temp$To == "To"), ]
+for(i in draftYearToTest:2010) {
+  temp <- readHTMLTable(paste0("http://www.basketball-reference.com/draft/NBA_", i, ".html"))$stats
+  temp <- temp[,-c(15:18)]
+  temp <- temp %>% filter(Pk != "Pk")
+  temp <- temp %>% filter(Pk != "")
   temp$draftYear <- i
-  temp <- temp %>% select(Player, VORP, G, GS, MP, draftYear)
+  temp <- temp %>% select(Player, VORP, G, MP, draftYear)
   temp$VORP <- as.numeric(temp$VORP)
   temp$link <- ""
   
+  lines <- readLines(paste0("http://www.basketball-reference.com/draft/NBA_", i, ".html"))
   for(j in 1:nrow(temp)) {
     print(j/nrow(temp))
-    page <- readLines(paste0("http://www.basketball-reference.com/play-index/psl_finder.cgi?request=1&match=combined&type=totals&per_minute_base=36&per_poss_base=100&lg_id=NBA&is_playoffs=N&year_min=&year_max=&franch_id=&season_start=1&season_end=-1&age_min=0&age_max=99&height_min=0&height_max=99&shoot_hand=&birth_country_is=Y&birth_country=&birth_state=&college_id=&draft_year=", i, "&is_active=&debut_yr_nba_start=&debut_yr_nba_end=&debut_yr_aba_start=&debut_yr_aba_end=&is_hof=&is_as=&as_comp=gt&as_val=&award=&pos_is_g=Y&pos_is_gf=Y&pos_is_f=Y&pos_is_fg=Y&pos_is_fc=Y&pos_is_c=Y&pos_is_cf=Y&qual=&c1stat=&c1comp=gt&c1val=&c2stat=&c2comp=gt&c2val=&c3stat=&c3comp=gt&c3val=&c4stat=&c4comp=gt&c4val=&c5stat=&c5comp=gt&c6mult=1.0&c6stat=&order_by=vorp"))
+    page <- lines[grep(temp$Player[j], lines)]
+    page <- strsplit(page, "a href=\\\"")[[1]]
     page <- page[grep(temp$Player[j], page)]
-    page <- strsplit(page, "a href=\\\"")[[1]][2]
     page <- strsplit(page, ">")[[1]][1]
     page <- paste0("http://www.basketball-reference.com", gsub("\\\"", "", page))
-    
     temp$link[j] <- page
   }
   
   player_stats <- rbind(player_stats, temp)
 }
+
+player_stats <- player_stats[which(substr(player_stats$link, nchar(player_stats$link) - 3, nchar(player_stats$link)) == "html"),]
 
 write.csv(player_stats, file = "player_stats.csv", row.names = F)
 
@@ -39,7 +46,7 @@ player_stats <- read.csv("player_stats.csv", header = T, stringsAsFactors = F)
 euroPlayers <- data.frame()
 collegePlayers <- data.frame()
 
-for(i in 144:nrow(player_stats)) {
+for(i in 1:nrow(player_stats)) {
   print(paste0(i, ": ", player_stats$Player[i]))
   lines <- readLines(player_stats$link[i])
   
@@ -59,7 +66,6 @@ for(i in 144:nrow(player_stats)) {
     if(isEuro) {
       
       seasons <- tryCatch(read_html(college) %>% html_nodes("table") %>% html_table() %>% .[[1]])
-      print(seasons)
       w <- which(seasons$Season == "Career")
       if(length(w) == 0) {
         seasons <- length(which(seasons$Season != ""))
@@ -79,7 +85,6 @@ for(i in 144:nrow(player_stats)) {
     } else {
       
       seasons <- tryCatch(read_html(college) %>% html_nodes("table") %>% html_table() %>% .[[1]])
-      print(seasons)
       w <- which(seasons$Season == "Career")
       if(length(w) == 0) {
         seasons <- length(which(seasons$Season != ""))
@@ -127,6 +132,8 @@ for(i in 144:nrow(player_stats)) {
 collegePlayers <- merge(collegePlayers, player_stats, by="Player") %>% .[order(-.$VORP),]
 euroPlayers <- merge(euroPlayers, player_stats, by="Player") %>% .[order(-.$VORP),]
 
+
+
 write.csv(collegePlayers, file = "college_players.csv", row.names = F)
 write.csv(euroPlayers, file = "euro_players.csv", row.names = F)
 
@@ -141,8 +148,8 @@ a <- collegePlayers[!duplicated(collegePlayers$Player), ]
 a$vorpMin <- a$VORP/a$MP
 a <- a[order(-a$draftYear, -a$VORP),]
 
-test <- a %>% filter(draftYear >= 2015)
-train <- a %>% filter(draftYear < 2015)
+test <- a %>% filter(draftYear >= draftYearToTest)
+train <- a %>% filter(draftYear < draftYearToTest & !is.na(VORP))
 
 pergame  <- train[complete.cases(train$pts_per_g),]
 permin   <- train[complete.cases(train$pts_per_min),]
@@ -151,6 +158,7 @@ advanced <- train[complete.cases(train$bpm),]
 
 pergame$pf_per_g <- NULL
 pergame$tov_per_g <- NULL
+pergame$fg3_pct <- NULL
 perposs$fg3_pct <- NULL
 advanced$fg3_pct <- NULL
 
@@ -170,6 +178,10 @@ toRunAdvanced <- paste0("advancedModel <- randomForest(vorpMin ~ ", paste(colnam
 eval(parse(text = toRunAdvanced))
 predAdvanced <- predict(advancedModel, newdata = test)
 
+test$pGvorpMin <- predPerGame
+test$pMvorpMin <- predPerMin
+test$pPvorpMin <- predPerPoss
+test$avorpMin <- predAdvanced
 
 test$perGamePred <- predPerGame * test$MP
 test$perMinPred  <- predPerMin * test$MP
@@ -177,85 +189,89 @@ test$perPossPred <- predPerPoss * test$MP
 test$AdvancedPred <- predAdvanced * test$MP
 
 
-##Per Game
-bestPerGameCombo <- ""
-bestPerGameRMSE <- 100
+test <- test %>% select(Player, perGamePred, perMinPred, perPossPred, AdvancedPred, VORP, vorpMin)
+test[order(-test$AdvancedPred),]
 
-for(i in 1:length(colnames(permin)[c(5:17)])) {
-  print(i)
-  t <- combn(colnames(pergame)[c(5:17)], m = i)
-  for(j in 1:ncol(t)) {
-    print(j/ncol(t))
-    toRunPerGame <- paste0("pergameModel <- randomForest(vorpMin ~ ", paste(t[,j], collapse = " + "), ", data = pergame)")
-    eval(parse(text = toRunPerGame))
-    predPerGame <- predict(pergameModel, newdata = test)
-    predPerGame <- predPerGame * test$MP
-    if(RMSE(test$VORP, predPerGame) < bestRMSE) {
-      bestPerGameRMSE <- RMSE(test$VORP, predPerGame)
-      bestPerGameCombo <- toRunPerGame
-    }
-  }
-}
-
-
-##Per Minute
-bestPerMinCombo <- ""
-bestPerMinRMSE <- 100
-
-for(i in 1:length(colnames(permin)[c(5:34)])) {
-  print(i)
-  t <- combn(colnames(permin)[c(5:34)], m = i)
-  for(j in 1:ncol(t)) {
-    print(j/ncol(t))
-    toRunPerMin <- paste0("perminModel <- randomForest(vorpMin ~ ", paste(colnames(permin)[c(5:34)], collapse = " + "), ", data = permin)")
-    eval(parse(text = toRunPerMin))
-    predPerMin <- predict(perminModel, newdata = test)
-    predPerMin <- predPerMin * test$MP
-    if(RMSE(test$VORP, predPerMin) < bestRMSE) {
-      bestPerMinRMSE <- RMSE(test$VORP, predPerMin)
-      bestPerMinCombo <- toRunPerMin
-    }
-  }
-}
-
-
-##Per Possession
-bestPerPossCombo <- ""
-bestPerPossRMSE <- 100
-
-for(i in 1:length(colnames(perposs)[c(5:52)])) {
-  print(i)
-  t <- combn(colnames(perposs)[c(5:52)], m = i)
-  for(j in 1:ncol(t)) {
-    print(j/ncol(t))
-    toRunPerPoss <- paste0("perpossModel <- randomForest(vorpMin ~ ", paste(colnames(perposs)[c(5:52)], collapse = " + "), ", data = perposs)")
-    eval(parse(text = toRunPerPoss))
-    predPerPoss <- predict(perpossModel, newdata = test)
-    predPerPoss <- predPerPoss * test$MP
-    if(RMSE(test$VORP, predPerPoss) < bestRMSE) {
-      bestPerPossRMSE <- RMSE(test$VORP, predPerPoss)
-      bestPerPossCombo <- toRunPerPoss
-    }
-  }
-}
-
-
-##Advanced
-bestAdvancedCombo <- ""
-bestAdvancedRMSE <- 100
-
-for(i in 1:length(colnames(advanced)[c(5:52)])) {
-  print(i)
-  t <- combn(colnames(advanced)[c(5:52)], m = i)
-  for(j in 1:ncol(t)) {
-    print(j/ncol(t))
-    toRunAdvanced <- paste0("advancedModel <- randomForest(vorpMin ~ ", paste(colnames(advanced)[c(5:76)], collapse = " + "), ", data = advanced)")
-    eval(parse(text = toRunAdvanced))
-    predAdvanced <- predict(advancedModel, newdata = test)
-    predAdvanced <- predAdvanced * test$MP
-    if(RMSE(test$VORP, predAdvanced) < bestRMSE) {
-      bestAdvancedRMSE <- RMSE(test$VORP, predAdvanced)
-      bestAdvancedCombo <- toRunAdvanced
-    }
-  }
-}
+# 
+# ##Per Game
+# bestPerGameCombo <- ""
+# bestPerGameRMSE <- 100
+# 
+# for(i in 1:length(colnames(permin)[c(5:17)])) {
+#   print(i)
+#   t <- combn(colnames(pergame)[c(5:17)], m = i)
+#   for(j in 1:ncol(t)) {
+#     print(j/ncol(t))
+#     toRunPerGame <- paste0("pergameModel <- randomForest(vorpMin ~ ", paste(t[,j], collapse = " + "), ", data = pergame)")
+#     eval(parse(text = toRunPerGame))
+#     predPerGame <- predict(pergameModel, newdata = test)
+#     predPerGame <- predPerGame * test$MP
+#     if(RMSE(test$VORP, predPerGame) < bestRMSE) {
+#       bestPerGameRMSE <- RMSE(test$VORP, predPerGame)
+#       bestPerGameCombo <- toRunPerGame
+#     }
+#   }
+# }
+# 
+# 
+# ##Per Minute
+# bestPerMinCombo <- ""
+# bestPerMinRMSE <- 100
+# 
+# for(i in 1:length(colnames(permin)[c(5:34)])) {
+#   print(i)
+#   t <- combn(colnames(permin)[c(5:34)], m = i)
+#   for(j in 1:ncol(t)) {
+#     print(j/ncol(t))
+#     toRunPerMin <- paste0("perminModel <- randomForest(vorpMin ~ ", paste(colnames(permin)[c(5:34)], collapse = " + "), ", data = permin)")
+#     eval(parse(text = toRunPerMin))
+#     predPerMin <- predict(perminModel, newdata = test)
+#     predPerMin <- predPerMin * test$MP
+#     if(RMSE(test$VORP, predPerMin) < bestRMSE) {
+#       bestPerMinRMSE <- RMSE(test$VORP, predPerMin)
+#       bestPerMinCombo <- toRunPerMin
+#     }
+#   }
+# }
+# 
+# 
+# ##Per Possession
+# bestPerPossCombo <- ""
+# bestPerPossRMSE <- 100
+# 
+# for(i in 1:length(colnames(perposs)[c(5:52)])) {
+#   print(i)
+#   t <- combn(colnames(perposs)[c(5:52)], m = i)
+#   for(j in 1:ncol(t)) {
+#     print(j/ncol(t))
+#     toRunPerPoss <- paste0("perpossModel <- randomForest(vorpMin ~ ", paste(colnames(perposs)[c(5:52)], collapse = " + "), ", data = perposs)")
+#     eval(parse(text = toRunPerPoss))
+#     predPerPoss <- predict(perpossModel, newdata = test)
+#     predPerPoss <- predPerPoss * test$MP
+#     if(RMSE(test$VORP, predPerPoss) < bestRMSE) {
+#       bestPerPossRMSE <- RMSE(test$VORP, predPerPoss)
+#       bestPerPossCombo <- toRunPerPoss
+#     }
+#   }
+# }
+# 
+# 
+# ##Advanced
+# bestAdvancedCombo <- ""
+# bestAdvancedRMSE <- 100
+# 
+# for(i in 1:length(colnames(advanced)[c(5:52)])) {
+#   print(i)
+#   t <- combn(colnames(advanced)[c(5:52)], m = i)
+#   for(j in 1:ncol(t)) {
+#     print(j/ncol(t))
+#     toRunAdvanced <- paste0("advancedModel <- randomForest(vorpMin ~ ", paste(colnames(advanced)[c(5:76)], collapse = " + "), ", data = advanced)")
+#     eval(parse(text = toRunAdvanced))
+#     predAdvanced <- predict(advancedModel, newdata = test)
+#     predAdvanced <- predAdvanced * test$MP
+#     if(RMSE(test$VORP, predAdvanced) < bestRMSE) {
+#       bestAdvancedRMSE <- RMSE(test$VORP, predAdvanced)
+#       bestAdvancedCombo <- toRunAdvanced
+#     }
+#   }
+# }
