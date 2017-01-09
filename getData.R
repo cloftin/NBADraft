@@ -4,6 +4,7 @@ library(lubridate)
 library(rvest)
 library(stringi)
 library(randomForest)
+library(RSQLite)
 
 source("get_College_Data.R")
 
@@ -43,9 +44,11 @@ write.csv(player_stats, file = "player_stats.csv", row.names = F)
 
 
 player_stats <- read.csv("player_stats.csv", header = T, stringsAsFactors = F)
+
 euroPlayers <- data.frame()
 collegePlayers <- data.frame()
 
+player_stats$Amateur <- ""
 for(i in 1:nrow(player_stats)) {
   print(paste0(i, ": ", player_stats$Player[i]))
   lines <- readLines(player_stats$link[i])
@@ -64,7 +67,7 @@ for(i in 1:nrow(player_stats)) {
     birth <- as.Date(substr(strsplit(birth, "data-birth=\\\"")[[1]][2], 1, 10))
     
     if(isEuro) {
-      
+      player_stats$Amateur[i] <- "Euro"
       seasons <- tryCatch(read_html(college) %>% html_nodes("table") %>% html_table() %>% .[[1]])
       w <- which(seasons$Season == "Career")
       if(length(w) == 0) {
@@ -83,7 +86,7 @@ for(i in 1:nrow(player_stats)) {
       college_stats <- cbind(college_stats, games)
       
     } else {
-      
+      player_stats$Amateur[i] <- "College"
       seasons <- tryCatch(read_html(college) %>% html_nodes("table") %>% html_table() %>% .[[1]])
       w <- which(seasons$Season == "Career")
       if(length(w) == 0) {
@@ -129,8 +132,8 @@ for(i in 1:nrow(player_stats)) {
 }
 
 
-collegePlayers <- merge(collegePlayers, player_stats, by="Player") %>% .[order(-.$VORP),]
-euroPlayers <- merge(euroPlayers, player_stats, by="Player") %>% .[order(-.$VORP),]
+collegePlayers <- merge(player_stats, collegePlayers, by="Player") %>% .[order(-.$VORP),]
+euroPlayers <- merge(player_stats, euroPlayers, by="Player") %>% .[order(-.$VORP),]
 
 
 
@@ -148,8 +151,8 @@ a <- collegePlayers[!duplicated(collegePlayers$Player), ]
 a$vorpMin <- a$VORP/a$MP
 a <- a[order(-a$draftYear, -a$VORP),]
 
-test <- a %>% filter(draftYear >= draftYearToTest)
-train <- a %>% filter(draftYear < draftYearToTest & !is.na(VORP))
+test <- a %>% filter(draftYear == draftYearToTest)
+train <- a %>% filter(draftYear != draftYearToTest & !is.na(VORP))
 
 pergame  <- train[complete.cases(train$pts_per_g),]
 permin   <- train[complete.cases(train$pts_per_min),]
