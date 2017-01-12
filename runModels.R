@@ -2,6 +2,7 @@ library(dplyr)
 library(DBI)
 library(randomForest)
 
+yearsToExclude <- c(2016)
 draftYearToTest <- 2016
 
 cn <- dbConnect(RSQLite::SQLite(), "NBADraft.sqlite3")
@@ -18,8 +19,14 @@ a <- collegePlayers[!duplicated(collegePlayers$Player), ]
 a$vorpMin <- a$VORP/a$MP
 a <- a[order(-a$draftYear, -a$VORP),]
 
-test <- a %>% filter(draftYear >= draftYearToTest)
-train <- a %>% filter(draftYear < draftYearToTest & !is.na(VORP))
+# test <- a %>% filter(draftYear >= draftYearToTest)
+test <- dbGetQuery(cn, "Select * from CollegeDraftProspects")
+test$season <- as.numeric(substr(test$season, nchar(test$season) - 1, nchar(test$season)))
+test$season <- 2000 + test$season
+test <- test[order(test$Player, -test$season),]
+test <- test[!duplicated(test$Player),]
+
+train <- a %>% filter(draftYear < draftYearToTest & !is.na(VORP) & !(draftYear %in% yearsToExclude))
 
 pergame  <- train[complete.cases(train$pts_per_g),]
 permin   <- train[complete.cases(train$pts_per_min),]
@@ -32,19 +39,19 @@ pergame$fg3_pct <- NULL
 perposs$fg3_pct <- NULL
 advanced$fg3_pct <- NULL
 
-toRunPerGame <- paste0("pergameModel <- randomForest(vorpMin ~ ", paste(colnames(pergame)[c(8, 10:23, 81:82)], collapse = " + "), ", data = pergame)")
-eval(parse(text = toRunPerGame))
-predPerGame <- predict(pergameModel, newdata = test)
+# toRunPerGame <- paste0("pergameModel <- randomForest(vorpMin ~ ", paste(colnames(pergame)[c(8, 10:23, 81:82)], collapse = " + "), ", data = pergame)")
+# eval(parse(text = toRunPerGame))
+# predPerGame <- predict(pergameModel, newdata = test)
+# 
+# toRunPerMin <- paste0("perminModel <- randomForest(vorpMin ~ ", paste(colnames(permin)[c(8, 10:40, 84:85)], collapse = " + "), ", data = permin)")
+# eval(parse(text = toRunPerMin))
+# predPerMin <- predict(perminModel, newdata = test)
+# 
+# toRunPerPoss <- paste0("perpossModel <- randomForest(vorpMin ~ ", paste(colnames(perposs)[c(8, 10:58, 83:84)], collapse = " + "), ", data = perposs)")
+# eval(parse(text = toRunPerPoss))
+# predPerPoss <- predict(perpossModel, newdata = test)
 
-toRunPerMin <- paste0("perminModel <- randomForest(vorpMin ~ ", paste(colnames(permin)[c(8, 10:40, 84:85)], collapse = " + "), ", data = permin)")
-eval(parse(text = toRunPerMin))
-predPerMin <- predict(perminModel, newdata = test)
-
-toRunPerPoss <- paste0("perpossModel <- randomForest(vorpMin ~ ", paste(colnames(perposs)[c(8, 10:58, 83:84)], collapse = " + "), ", data = perposs)")
-eval(parse(text = toRunPerPoss))
-predPerPoss <- predict(perpossModel, newdata = test)
-
-toRunAdvanced <- paste0("advancedModel <- randomForest(vorpMin ~ ", paste(colnames(advanced)[c(8, 10:84)], collapse = " + "), ", data = advanced)")
+toRunAdvanced <- paste0("advancedModel <- randomForest(vorpMin ~ ", paste(colnames(advanced)[c(8, 10:82)], collapse = " + "), ", data = advanced)")
 eval(parse(text = toRunAdvanced))
 predAdvanced <- predict(advancedModel, newdata = test)
 
@@ -58,4 +65,4 @@ test$perMinPred  <- predPerMin * test$MP
 test$perPossPred <- predPerPoss * test$MP
 test$AdvancedPred <- predAdvanced * test$MP
 
-test %>% .[order(-.$avorpMin),] %>% select(Player, VORP, vorpMin, avorpMin)
+test %>% .[order(-.$avorpMin),] %>% select(Player, avorpMin)
