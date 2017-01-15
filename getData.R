@@ -5,6 +5,7 @@ library(rvest)
 library(stringi)
 library(randomForest)
 library(RSQLite)
+library(DBI)
 
 source("get_College_Data.R")
 
@@ -40,10 +41,13 @@ for(i in draftYearToTest:2010) {
 
 player_stats <- player_stats[which(substr(player_stats$link, nchar(player_stats$link) - 3, nchar(player_stats$link)) == "html"),]
 
-write.csv(player_stats, file = "player_stats.csv", row.names = F)
+dbGetQuery(cn, "Drop Table PlayerStats")
+dbWriteTable(cn, "PlayerStats", player_stats)
+
+# write.csv(player_stats, file = "player_stats.csv", row.names = F)
 
 
-player_stats <- read.csv("player_stats.csv", header = T, stringsAsFactors = F)
+# player_stats <- read.csv("player_stats.csv", header = T, stringsAsFactors = F)
 
 euroPlayers <- data.frame()
 collegePlayers <- data.frame()
@@ -101,10 +105,12 @@ for(i in 1:nrow(player_stats)) {
       advanced <- get_College_Advanced(college, seasons)
       
       games <- per_game$g
+      school_link <- paste0("http://www.sports-reference.com", per_game$school_link)
+      conf_link <- paste0("http://www.sports-reference.com", per_game$conf_link)
       
       college_stats <- merge(merge(merge(per_game, per_minute, by = "season"), per_poss, by = "season"), advanced, by = "season")
       college_stats <- college_stats[, -c(grep(".x", colnames(college_stats)), grep(".y", colnames(college_stats)))]
-      college_stats <- cbind(college_stats, games)
+      college_stats <- cbind(college_stats, games, school_link, conf_link)
     }
     
     
@@ -139,6 +145,17 @@ euroPlayers <- merge(player_stats, euroPlayers, by="Player") %>% .[order(-.$VORP
 
 write.csv(collegePlayers, file = "college_players.csv", row.names = F)
 write.csv(euroPlayers, file = "euro_players.csv", row.names = F)
+
+cn <- dbConnect(RSQLite::SQLite(), "NBADraft.sqlite3")
+
+dbGetQuery(cn, "Drop Table CollegePlayers")
+dbGetQuery(cn, "Drop Table EuroPlayers")
+
+collegePlayers$mp <- NULL
+euroPlayers$mp <- NULL
+
+dbWriteTable(cn, "CollegePlayers", collegePlayers)
+dbWriteTable(cn, "EuroPlayers", euroPlayers)
 
 collegePlayers <- read.csv(file = "college_players.csv", header = T, stringsAsFactors = F)
 euroPlayers <- read.csv(file = "euro_players.csv", header = T, stringsAsFactors = F)

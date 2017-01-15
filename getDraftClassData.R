@@ -56,6 +56,8 @@ getDraftClassData <- function() {
       advanced <- get_College_Advanced(players$Link[i], seasons)
       
       games <- per_game$g
+      school_link <- paste0("http://www.sports-reference.com", per_game$school_link)
+      conf_link <- paste0("http://www.sports-reference.com", per_game$conf_link)
       
       college_stats <- merge(merge(merge(per_game, per_minute, by = "season"), per_poss, by = "season"), advanced, by = "season")
       college_stats <- college_stats[, -c(grep(".x", colnames(college_stats)), grep(".y", colnames(college_stats)))]

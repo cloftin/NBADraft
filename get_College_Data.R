@@ -90,6 +90,12 @@ get_College_PerGame <- function(link, seasons) {
   season <- strsplit(season, ">") %>% lapply(., function(x) x[2]) %>% unlist()
   season <- strsplit(season, "<") %>% lapply(., function(x) x[1]) %>% unlist()
   
+  school_link <- unlist(lapply(stats[grep("cbb/schools", stats)], function(x) strsplit(x, "href=\\\"")[[1]][2]))
+  school_link <- unlist(lapply(school_link, function(x) strsplit(x, "\\\"")[[1]][1]))
+  
+  conf_link <- unlist(lapply(stats[grep("conferences", stats)], function(x) strsplit(x, "href=\\\"")[[1]][2]))
+  conf_link <- unlist(lapply(conf_link, function(x) strsplit(x, "\\\"")[[1]][1]))
+  
   stats <- stats[-grep("a href|full_table|season|age|team_id|lg_id|pos|school_name|conf_abbr|left|players_per_game|zzz", stats)]
   t <- lapply(which(stats == "g"), function(x) seq(x + 1, length(stats), by = 2))
   selection <- c()
@@ -102,6 +108,8 @@ get_College_PerGame <- function(link, seasons) {
   stats <- cbind(season, stats)
   
   colnames(stats) <- columns
+  
+  stats <- cbind(stats, school_link, conf_link)
   
   return(stats)
 }
@@ -126,6 +134,12 @@ get_College_PerMinute <- function(link, seasons) {
   season <- strsplit(season, ">") %>% lapply(., function(x) x[2]) %>% unlist()
   season <- strsplit(season, "<") %>% lapply(., function(x) x[1]) %>% unlist()
   
+  school_link <- unlist(lapply(stats[grep("cbb/schools", stats)], function(x) strsplit(x, "href=\\\"")[[1]][2]))
+  school_link <- unlist(lapply(school_link, function(x) strsplit(x, "\\\"")[[1]][1]))
+  
+  conf_link <- unlist(lapply(stats[grep("conferences", stats)], function(x) strsplit(x, "href=\\\"")[[1]][2]))
+  conf_link <- unlist(lapply(conf_link, function(x) strsplit(x, "\\\"")[[1]][1]))
+  
   stats <- stats[-grep("a href|full_table|season|age|team_id|lg_id|pos|school_name|conf_abbr|left|players_per_min|tr_id", stats)]
   stats <- stats[seq(2, length(stats), by = 2)]
   stats <- unlist(lapply(strsplit(stats, "<"), function(x) head(x, 1)))
@@ -133,6 +147,8 @@ get_College_PerMinute <- function(link, seasons) {
   stats <- cbind(season, stats)
   
   colnames(stats) <- columns
+  
+  stats <- cbind(stats, school_link, conf_link)
   
   # Adjust Per-40 to Per-36
   for(i in c(3,4,6,7,9,10,12,13,15:21)) {
@@ -162,6 +178,12 @@ get_College_PerPoss <- function(link, seasons) {
   season <- strsplit(season, ">") %>% lapply(., function(x) x[2]) %>% unlist()
   season <- strsplit(season, "<") %>% lapply(., function(x) x[1]) %>% unlist()
   
+  school_link <- unlist(lapply(stats[grep("cbb/schools", stats)], function(x) strsplit(x, "href=\\\"")[[1]][2]))
+  school_link <- unlist(lapply(school_link, function(x) strsplit(x, "\\\"")[[1]][1]))
+  
+  conf_link <- unlist(lapply(stats[grep("conferences", stats)], function(x) strsplit(x, "href=\\\"")[[1]][2]))
+  conf_link <- unlist(lapply(conf_link, function(x) strsplit(x, "\\\"")[[1]][1]))
+  
   stats <- stats[-grep("a href|full_table|season|age|team_id|lg_id|school_name|conf_abbr|left|tr_id|tr id", stats)]
   stats <- stats[seq(3, length(stats), by = 2)]
   stats <- unlist(lapply(strsplit(stats, "<"), function(x) head(x, 1)))
@@ -169,6 +191,9 @@ get_College_PerPoss <- function(link, seasons) {
   stats <- cbind(season, stats)
   
   colnames(stats) <- columns
+  
+  stats <- cbind(stats, school_link, conf_link)
+  
   stats$Xxx <- NULL
   
   return(stats)
@@ -194,6 +219,12 @@ get_College_Advanced <- function(link, seasons) {
   season <- strsplit(season, ">") %>% lapply(., function(x) x[2]) %>% unlist()
   season <- strsplit(season, "<") %>% lapply(., function(x) x[1]) %>% unlist()
   
+  school_link <- unlist(lapply(stats[grep("cbb/schools", stats)], function(x) strsplit(x, "href=\\\"")[[1]][2]))
+  school_link <- unlist(lapply(school_link, function(x) strsplit(x, "\\\"")[[1]][1]))
+  
+  conf_link <- unlist(lapply(stats[grep("conferences", stats)], function(x) strsplit(x, "href=\\\"")[[1]][2]))
+  conf_link <- unlist(lapply(conf_link, function(x) strsplit(x, "\\\"")[[1]][1]))
+  
   stats <- stats[-grep("a href|full_table|season|age|team_id|lg_id|pos|school_name|conf_abbr|left|players_advanced|tr_id", stats)]
   stats <- stats[seq(2, length(stats), by = 2)]
   stats <- unlist(lapply(strsplit(stats, "<"), function(x) head(x, 1)))
@@ -201,6 +232,9 @@ get_College_Advanced <- function(link, seasons) {
   stats <- cbind(season, stats)
   
   colnames(stats) <- columns
+  
+  stats <- cbind(stats, school_link, conf_link)
+  
   stats$Xxx <- NULL
   stats$Yyy <- NULL
   
