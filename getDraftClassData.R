@@ -1,5 +1,7 @@
 library(DBI)
 library(dplyr)
+library(rvest)
+library(lubridate)
 
 source("get_College_Data.R")
 
@@ -61,7 +63,7 @@ getDraftClassData <- function() {
       
       college_stats <- merge(merge(merge(per_game, per_minute, by = "season"), per_poss, by = "season"), advanced, by = "season")
       college_stats <- college_stats[, -c(grep(".x", colnames(college_stats)), grep(".y", colnames(college_stats)))]
-      college_stats <- cbind(college_stats, games)
+      college_stats <- cbind(college_stats, games, school_link, conf_link)
     }
     
     

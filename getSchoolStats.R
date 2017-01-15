@@ -6,45 +6,40 @@ getSchoolStats <- function() {
   
   cn <- dbConnect(RSQLite::SQLite(), "NBADraft.sqlite3")
   
-  lines <- readLines("http://www.sports-reference.com/cbb/conferences/") 
-  lines <- lines[grep("conf_name", lines)]
-  lines <- lines[c(2:length(lines))]
-  
-  links <- unlist(lapply(lines, function(x) strsplit(strsplit(x, "a href=\\\"")[[1]][2], "\\\">")[[1]][1]))
-  names <- unlist(lapply(lines, function(x) strsplit(strsplit(strsplit(x, "a href=\\\"")[[1]][2], "\\\">")[[1]][2], "</a>")[[1]][1]))
-  
-  links <- as.character(links[!is.na(links)])
-  links <- paste0("http://www.sports-reference.com", links)
-  names <- as.character(names[!is.na(names)])
-  
-  conferences <- data.frame(matrix(ncol = 0, nrow = length(names)))
-  conferences$Conference <- names
-  conferences$Link <- links
-  
   dat <- data.frame()
-  for(i in 1:nrow(conferences)) {
+  for(i in 2007:2017) {
+    print(i)
+    table <- readHTMLTable(paste0("http://www.sports-reference.com/cbb/seasons/", i, "-school-stats.html"), stringsAsFactors = F)$basic_school_stats
+    table$Rk <- as.numeric(table$Rk)
+    table <- table[complete.cases(table$Rk),]
     
-    table <- data.frame(readHTMLTable(conferences$Link[i]))
-    table <- table[,c(2, 3, 7, 8)]
+    table <- table[, -c(9:ncol(table))]
+    table <- table %>% select(School, SRS, SOS)
     
-    confLines <- readLines(conferences$Link[i])
-    confLines <- confLines[grep("data-stat=\\\"season\\\"", confLines)]
-    confLines <- confLines[c(2:length(confLines))]
-    confLines <- unlist(lapply(confLines, function(x) strsplit(strsplit(x, "data-stat=\\\"season\\\" ><a href=\\\"")[[1]][2], "\\\"")[[1]][1]))
-    table <- cbind(table, confLines)
-    colnames(table) <- c("Season", "NumSchools", "SRS", "SOS", "ConfLink")
+    
+    lines <- readLines(paste0("http://www.sports-reference.com/cbb/seasons/", i, "-school-stats.html")) 
+    lines <- lines[grep("data-stat=\\\"school_name\\\" ><a href='/cbb/schools", lines)]
+    
+    
+    links <- unlist(lapply(lines, function(x) strsplit(strsplit(x, "a href='")[[1]][2], "'>")[[1]][1]))
+    
+    links <- as.character(links[!is.na(links)])
+    
+    links <- paste0("http://www.sports-reference.com", links)
+    
+    table$school_link <- links
+    
+    table$School <- as.character(table$School)
+    table$SRS <- as.numeric(table$SRS)
+    table$SOS <- as.numeric(table$SOS)
+    table$school_link <- as.character(table$school_link)
     
     dat <- rbind(dat, table)
     
   }
-  dat$Season <- as.character(dat$Season)
-  dat$NumSchools <- as.integer(dat$NumSchools)
-  dat$SRS <- as.numeric(dat$SRS)
-  dat$SOS <- as.numeric(dat$SOS)
-  dat$ConfLink <- as.character(dat$ConfLink)
   
-  dbGetQuery(cn, "Drop Table ConferenceStats")
+  dbGetQuery(cn, "Drop Table SchoolStats")
   
-  dbWriteTable(cn, "ConferenceStats", dat)
+  dbWriteTable(cn, "SchoolStats", dat)
   
 }
