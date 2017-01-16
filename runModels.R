@@ -2,14 +2,23 @@ library(dplyr)
 library(DBI)
 library(randomForest)
 
-yearsToExclude <- c(2016)
+options(scipen = 999)
+
 draftYearToTest <- 2016
+yearsToExclude <- c(draftYearToTest)
 
 cn <- dbConnect(RSQLite::SQLite(), "NBADraft.sqlite3")
 
-collegePlayers <- dbGetQuery(cn, "Select a.*, b.Height, b.Weight, b.Wingspan from CollegePlayers a
-                                  inner join Measurements b
-                                  on a.Player = b.Player")
+collegePlayers <- dbGetQuery(cn, "Select a.*, b.Season, b.ConfSRS, b.ConfSOS, 
+                                  c.School, c.SchoolSRS, c.SchoolSOS,
+                                  d.Height, d.Weight, d.Wingspan
+                                  from CollegePlayers a
+                                  inner join ConferenceStats b
+                                  inner join SchoolStats c
+                                  inner join Measurements d
+                                  on a.conf_link = b.ConfLink 
+                                  and a.school_link = c.school_link
+                                  and a.Player = d.Player")
 
 collegePlayers$season <- as.numeric(substr(collegePlayers$season, nchar(collegePlayers$season) - 1, nchar(collegePlayers$season)))
 collegePlayers$season <- 2000 + collegePlayers$season
@@ -19,14 +28,22 @@ a <- collegePlayers[!duplicated(collegePlayers$Player), ]
 a$vorpMin <- a$VORP/a$MP
 a <- a[order(-a$draftYear, -a$VORP),]
 
-# test <- a %>% filter(draftYear >= draftYearToTest)
-test <- dbGetQuery(cn, "Select * from CollegeDraftProspects")
+test <- a %>% filter(draftYear == draftYearToTest)
+
+test <- dbGetQuery(cn, "Select a.*, b.Season, b.ConfSRS, b.ConfSOS, 
+                               c.School, c.SchoolSRS, c.SchoolSOS
+                               from CollegeDraftProspects a
+                               inner join ConferenceStats b
+                               inner join SchoolStats c
+                               on a.conf_link = b.ConfLink 
+                               and a.school_link = c.school_link")
+
 test$season <- as.numeric(substr(test$season, nchar(test$season) - 1, nchar(test$season)))
 test$season <- 2000 + test$season
 test <- test[order(test$Player, -test$season),]
 test <- test[!duplicated(test$Player),]
 
-train <- a %>% filter(draftYear < draftYearToTest & !is.na(VORP) & !(draftYear %in% yearsToExclude))
+train <- a %>% filter(draftYear <= draftYearToTest & !is.na(VORP) & !(draftYear %in% yearsToExclude))
 
 pergame  <- train[complete.cases(train$pts_per_g),]
 permin   <- train[complete.cases(train$pts_per_min),]
@@ -51,7 +68,9 @@ advanced$fg3_pct <- NULL
 # eval(parse(text = toRunPerPoss))
 # predPerPoss <- predict(perpossModel, newdata = test)
 
-toRunAdvanced <- paste0("advancedModel <- randomForest(vorpMin ~ ", paste(colnames(advanced)[c(8, 10:82)], collapse = " + "), ", data = advanced)")
+toRunAdvanced <- paste0("advancedModel <- randomForest(vorpMin ~ ", 
+                        paste(colnames(advanced)[c(8, 10:81, 86:87, 89:90)], collapse = " + "), 
+                        ", data = advanced, mtry = 77)")
 eval(parse(text = toRunAdvanced))
 predAdvanced <- predict(advancedModel, newdata = test)
 
@@ -65,4 +84,4 @@ test$perMinPred  <- predPerMin * test$MP
 test$perPossPred <- predPerPoss * test$MP
 test$AdvancedPred <- predAdvanced * test$MP
 
-test %>% .[order(-.$avorpMin),] %>% select(Player, avorpMin)
+test %>% .[order(-.$avorpMin),] %>% select(Player, VORP, MP, avorpMin, AdvancedPred)

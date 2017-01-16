@@ -15,7 +15,7 @@ getSchoolStats <- function() {
     
     table <- table[, -c(9:ncol(table))]
     table <- table %>% select(School, SRS, SOS)
-    
+    colnames(table) <- c("School", "SchoolSRS", "SchoolSOS")
     
     lines <- readLines(paste0("http://www.sports-reference.com/cbb/seasons/", i, "-school-stats.html")) 
     lines <- lines[grep("data-stat=\\\"school_name\\\" ><a href='/cbb/schools", lines)]
@@ -30,8 +30,8 @@ getSchoolStats <- function() {
     table$school_link <- links
     
     table$School <- as.character(table$School)
-    table$SRS <- as.numeric(table$SRS)
-    table$SOS <- as.numeric(table$SOS)
+    table$SchoolSRS <- as.numeric(table$SchoolSRS)
+    table$SchoolSOS <- as.numeric(table$SchoolSOS)
     table$school_link <- as.character(table$school_link)
     
     dat <- rbind(dat, table)

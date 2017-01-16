@@ -24,23 +24,25 @@ getConferenceStats <- function() {
   dat <- data.frame()
   for(i in 1:nrow(conferences)) {
     
-    table <- data.frame(readHTMLTable(conferences$Link[i]))
+    table <- data.frame(readHTMLTable(conferences$Link[i], stringsAsFactors = F))
     table <- table[,c(2, 3, 7, 8)]
     
     confLines <- readLines(conferences$Link[i])
     confLines <- confLines[grep("data-stat=\\\"season\\\"", confLines)]
     confLines <- confLines[c(2:length(confLines))]
     confLines <- unlist(lapply(confLines, function(x) strsplit(strsplit(x, "data-stat=\\\"season\\\" ><a href=\\\"")[[1]][2], "\\\"")[[1]][1]))
+    confLines <- paste0("http://www.sports-reference.com", confLines)
+    
     table <- cbind(table, confLines)
-    colnames(table) <- c("Season", "NumSchools", "SRS", "SOS", "ConfLink")
+    colnames(table) <- c("Season", "NumSchools", "ConfSRS", "ConfSOS", "ConfLink")
     
     dat <- rbind(dat, table)
     
   }
   dat$Season <- as.character(dat$Season)
   dat$NumSchools <- as.integer(dat$NumSchools)
-  dat$SRS <- as.numeric(dat$SRS)
-  dat$SOS <- as.numeric(dat$SOS)
+  dat$ConfSRS <- as.numeric(dat$ConfSRS)
+  dat$ConfSOS <- as.numeric(dat$ConfSOS)
   dat$ConfLink <- as.character(dat$ConfLink)
   
   dbGetQuery(cn, "Drop Table ConferenceStats")
