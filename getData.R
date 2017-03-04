@@ -15,7 +15,7 @@ draftYearToTest <- 2016
 
 player_stats <- data.frame()
 
-for(i in draftYearToTest:2010) {
+for(i in draftYearToTest:2002) {
   temp <- readHTMLTable(paste0("http://www.basketball-reference.com/draft/NBA_", i, ".html"))$stats
   temp <- temp[,-c(15:18)]
   temp <- temp %>% filter(Pk != "Pk")
@@ -41,6 +41,8 @@ for(i in draftYearToTest:2010) {
 
 player_stats <- player_stats[which(substr(player_stats$link, nchar(player_stats$link) - 3, nchar(player_stats$link)) == "html"),]
 
+cn <- dbConnect(RSQLite::SQLite(), "NBADraft.sqlite3")
+
 dbGetQuery(cn, "Drop Table PlayerStats")
 dbWriteTable(cn, "PlayerStats", player_stats)
 
@@ -53,9 +55,10 @@ euroPlayers <- data.frame()
 collegePlayers <- data.frame()
 
 player_stats$Amateur <- ""
-for(i in 1:nrow(player_stats)) {
+for(i in 793:nrow(player_stats)) {
   print(paste0(i, ": ", player_stats$Player[i]))
   lines <- readLines(player_stats$link[i])
+  position <- stri_trim(lines[grep(pattern = "Position:", lines) + 2])
   
   college <- lines[grep("College Basketball at|Euro Stats at", lines)][1]
   if(length(college) !=0 & !is.na(college)) {
@@ -87,7 +90,7 @@ for(i in 1:nrow(player_stats)) {
       
       college_stats <- merge(per_game, per_minute, by = "season")
       college_stats <- college_stats[, -c(grep(".x", colnames(college_stats)), grep(".y", colnames(college_stats)))]
-      college_stats <- cbind(college_stats, games)
+      college_stats <- cbind(college_stats, games, player_stats$link[i])
       
     } else {
       player_stats$Amateur[i] <- "College"
@@ -110,7 +113,7 @@ for(i in 1:nrow(player_stats)) {
       
       college_stats <- merge(merge(merge(per_game, per_minute, by = "season"), per_poss, by = "season"), advanced, by = "season")
       college_stats <- college_stats[, -c(grep(".x", colnames(college_stats)), grep(".y", colnames(college_stats)))]
-      college_stats <- cbind(college_stats, games, school_link, conf_link)
+      college_stats <- cbind(college_stats, games, school_link, conf_link, player_stats$link[i])
     }
     
     
@@ -127,7 +130,7 @@ for(i in 1:nrow(player_stats)) {
       age <- years + (days/365)
     }
     
-    player <- data.frame(Player = player_stats$Player[i], DraftAge = age)
+    player <- data.frame(Player = player_stats$Player[i], DraftAge = age, Position = position)
     
     if(isEuro) {
       euroPlayers <- rbind(euroPlayers, cbind(player, college_stats))
@@ -138,15 +141,13 @@ for(i in 1:nrow(player_stats)) {
 }
 
 
-collegePlayers <- merge(player_stats, collegePlayers, by="Player") %>% .[order(-.$VORP),]
-euroPlayers <- merge(player_stats, euroPlayers, by="Player") %>% .[order(-.$VORP),]
+collegePlayers <- merge(player_stats, collegePlayers, by="link") %>% .[order(-.$VORP),]
+euroPlayers <- merge(player_stats, euroPlayers, by="link") %>% .[order(-.$VORP),]
 
 
 
 write.csv(collegePlayers, file = "college_players.csv", row.names = F)
 write.csv(euroPlayers, file = "euro_players.csv", row.names = F)
-
-cn <- dbConnect(RSQLite::SQLite(), "NBADraft.sqlite3")
 
 dbGetQuery(cn, "Drop Table CollegePlayers")
 dbGetQuery(cn, "Drop Table EuroPlayers")

@@ -2,6 +2,7 @@ library(DBI)
 library(dplyr)
 library(rvest)
 library(lubridate)
+library(stringi)
 
 source("get_College_Data.R")
 
@@ -17,9 +18,15 @@ getDraftClassData <- function() {
   for(i in 1:nrow(players)) {
     print(paste0(i, ": ", players$Player[i]))
     lines <- readLines(players$DXLink[i])
+
     birth <- lines[grep("Bday", lines)]
     birth <- as.Date(substr(strsplit(birth, "b> ")[[1]][2], 1, 10), format = "%m/%d/%Y")
     
+    lines <- readLines(players$Link[i])
+    position <- stri_trim(lines[grep(pattern = "Position:", lines) + 2])
+    if(length(position) == 0) {
+      position <- NA
+    }
     if(players$isEuro[i]) {
       
       players$Amateur[i] <- "Euro"
@@ -80,7 +87,7 @@ getDraftClassData <- function() {
       age <- years + (days/365)
     }
     
-    player <- data.frame(Player = players$Player[i], DraftAge = age)
+    player <- data.frame(Player = players$Player[i], DraftAge = age, Position = position)
     
     if(players$isEuro[i]) {
       euroPlayers <- rbind(euroPlayers, cbind(player, college_stats))
