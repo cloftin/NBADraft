@@ -88,6 +88,8 @@ getDraftClassData <- function() {
     }
     
     player <- data.frame(Player = players$Player[i], DraftAge = age, Position = position)
+    college_stats$season <- as.character(college_stats$season)
+    college_stats$Year <- 2000 + as.integer(substr(college_stats$season, nchar(college_stats$season) - 1, nchar(college_stats$season)))
     
     if(players$isEuro[i]) {
       euroPlayers <- rbind(euroPlayers, cbind(player, college_stats))

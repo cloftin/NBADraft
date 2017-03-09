@@ -55,7 +55,7 @@ euroPlayers <- data.frame()
 collegePlayers <- data.frame()
 
 player_stats$Amateur <- ""
-for(i in 793:nrow(player_stats)) {
+for(i in 796:nrow(player_stats)) {
   print(paste0(i, ": ", player_stats$Player[i]))
   lines <- readLines(player_stats$link[i])
   position <- stri_trim(lines[grep(pattern = "Position:", lines) + 2])
@@ -132,6 +132,7 @@ for(i in 793:nrow(player_stats)) {
     
     player <- data.frame(Player = player_stats$Player[i], DraftAge = age, Position = position)
     
+    college_stats$Year <- 2000 + as.integer(substr(college_stats$season, nchar(college_stats$season) - 1, nchar(college_stats$season)))
     if(isEuro) {
       euroPlayers <- rbind(euroPlayers, cbind(player, college_stats))
     } else {

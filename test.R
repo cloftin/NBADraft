@@ -1,1 +1,2 @@
-runCollegeModels(2011)
+source("runCollegeModels.R")
+runCollegeModels(2015, byPosition = F)
