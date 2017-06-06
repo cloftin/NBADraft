@@ -15,7 +15,7 @@ draftYearToTest <- 2016
 
 player_stats <- data.frame()
 
-for(i in draftYearToTest:2002) {
+for(i in draftYearToTest:1980) {
   temp <- readHTMLTable(paste0("http://www.basketball-reference.com/draft/NBA_", i, ".html"))$stats
   temp <- temp[,-c(15:18)]
   temp <- temp %>% filter(Pk != "Pk")
@@ -55,11 +55,13 @@ euroPlayers <- data.frame()
 collegePlayers <- data.frame()
 
 player_stats$Amateur <- ""
-for(i in 796:nrow(player_stats)) {
+for(i in 1:nrow(player_stats)) {
   print(paste0(i, ": ", player_stats$Player[i]))
   lines <- readLines(player_stats$link[i])
   position <- stri_trim(lines[grep(pattern = "Position:", lines) + 2])
-  
+  if(length(position) == 0) {
+    position <- NA
+  }
   college <- lines[grep("College Basketball at|Euro Stats at", lines)][1]
   if(length(college) !=0 & !is.na(college)) {
     college <- strsplit(college, "<a href=\\\"")[[1]][2]
@@ -94,7 +96,13 @@ for(i in 796:nrow(player_stats)) {
       
     } else {
       player_stats$Amateur[i] <- "College"
-      seasons <- tryCatch(read_html(college) %>% html_nodes("table") %>% html_table() %>% .[[1]])
+      seasons <- tryCatch(read_html(college) %>% html_nodes("table") %>% html_table() %>% .[[1]],
+                          error = function(e) {
+                            e
+                          })
+      if(inherits(seasons, "error")) {
+        next
+      }
       w <- which(seasons$Season == "Career")
       if(length(w) == 0) {
         seasons <- length(which(seasons$Season != ""))
@@ -102,16 +110,37 @@ for(i in 796:nrow(player_stats)) {
         seasons <- w - 1
       }
       
+      per_game <- NA
+      per_minute <- NA
+      per_poss <- NA
+      advanced <- NA
       per_game <- get_College_PerGame(college, seasons)
-      per_minute <- get_College_PerMinute(college, seasons)
-      per_poss <- get_College_PerPoss(college, seasons)
-      advanced <- get_College_Advanced(college, seasons)
+      per_minute <- tryCatch(get_College_PerMinute(college, seasons), error = function(e) {
+        per_minute <- NA
+      })
+      per_poss <- tryCatch(get_College_PerPoss(college, seasons), error = function(e) {
+        per_poss <- NA
+      })
+      advanced <- tryCatch(get_College_Advanced(college, seasons), error = function(e) {
+        advanced <- NA
+      })
       
       games <- per_game$g
       school_link <- paste0("http://www.sports-reference.com", per_game$school_link)
       conf_link <- paste0("http://www.sports-reference.com", per_game$conf_link)
       
-      college_stats <- merge(merge(merge(per_game, per_minute, by = "season"), per_poss, by = "season"), advanced, by = "season")
+      if(!is.na(per_game)) {
+        college_stats <- per_game
+      }
+      if(!is.na(per_minute)) {
+        college_stats <- merge(per_game, per_minute, by = "season")
+      }
+      if(!is.na(per_poss)) {
+        college_stats <- merge(college_stats, per_poss, by = "season")
+      }
+      if(!is.na(advanced)) {
+        college_stats <- merge(college_stats, advanced, by = "season")
+      }
       college_stats <- college_stats[, -c(grep(".x", colnames(college_stats)), grep(".y", colnames(college_stats)))]
       college_stats <- cbind(college_stats, games, school_link, conf_link, player_stats$link[i])
     }
@@ -120,6 +149,9 @@ for(i in 796:nrow(player_stats)) {
     
     
     age <- 0
+    if(month(birth) == 2 && day(birth) == 29) {
+      birth <- birth + days(1)
+    }
     if(month(birth) < 6) {
       years <- player_stats$draftYear[i] - year(birth)
       days <- as.numeric(difftime(paste0(player_stats$draftYear[i], "-06-01"), paste0(player_stats$draftYear[i], substr(birth, 5, 10))))
@@ -134,12 +166,27 @@ for(i in 796:nrow(player_stats)) {
     
     college_stats$Year <- 2000 + as.integer(substr(college_stats$season, nchar(college_stats$season) - 1, nchar(college_stats$season)))
     if(isEuro) {
-      euroPlayers <- rbind(euroPlayers, cbind(player, college_stats))
-    } else {
-      collegePlayers <- rbind(collegePlayers, cbind(player, college_stats))
+      t <- tryCatch(bind_rows(euroPlayers, cbind(player, college_stats)), error = function(e) {
+        e
+      })
+      if(inherits(t, "error")) {
+        next
+      } else {
+        euroPlayers <- t
+      }
     }
+  } else {
+    t <- tryCatch(bind_rows(collegePlayers, cbind(player, college_stats)), error = function(e) {
+      e
+    })
+    if(inherits(t, "error")) {
+      next
+    } else {
+      collegePlayers <- t
+    } 
   }
 }
+
 
 
 collegePlayers <- merge(player_stats, collegePlayers, by="link") %>% .[order(-.$VORP),]

@@ -238,7 +238,7 @@ runCollegeModels <- function(draftYearToTest = 2017, dx = F, yearsToExclude = c(
   }
   
   
-  View(results %>% select(Player, Position, Rank, DraftAge, StatsLM, StatsRF) %>% .[order(-.$StatsRF),])
+  View(results %>% select(Player, Position, Rank, DraftAge, RanksRF, RanksLM, StatsLM, StatsRF) %>% .[order(-.$StatsRF),])
   
   
   

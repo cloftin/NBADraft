@@ -19,8 +19,8 @@ getDraftClassData <- function() {
     print(paste0(i, ": ", players$Player[i]))
     lines <- readLines(players$DXLink[i])
 
-    birth <- lines[grep("Bday", lines)]
-    birth <- as.Date(substr(strsplit(birth, "b> ")[[1]][2], 1, 10), format = "%m/%d/%Y")
+    age <- lines[grep("Age:", lines)]
+    age <- as.numeric(strsplit(age, "strong> ")[[1]][2])
     
     lines <- readLines(players$Link[i])
     position <- stri_trim(lines[grep(pattern = "Position:", lines) + 2])
@@ -76,16 +76,16 @@ getDraftClassData <- function() {
     
     
     
-    age <- 0
-    if(month(birth) < 6) {
-      years <- players$DraftYear[i] - year(birth)
-      days <- as.numeric(difftime(paste0(players$DraftYear[i], "-06-01"), paste0(players$DraftYear[i], substr(birth, 5, 10))))
-      age <- years + (days/365)
-    } else {
-      years <- players$DraftYear[i] - year(birth) - 1
-      days <- as.numeric(difftime(paste0(players$DraftYear[i], substr(birth, 5, 10)), paste0(players$DraftYear[i], "-06-01")))
-      age <- years + (days/365)
-    }
+    # age <- 0
+    # if(month(birth) < 6) {
+    #   years <- players$DraftYear[i] - year(birth)
+    #   days <- as.numeric(difftime(paste0(players$DraftYear[i], "-06-01"), paste0(players$DraftYear[i], substr(birth, 5, 10))))
+    #   age <- years + (days/365)
+    # } else {
+    #   years <- players$DraftYear[i] - year(birth) - 1
+    #   days <- as.numeric(difftime(paste0(players$DraftYear[i], substr(birth, 5, 10)), paste0(players$DraftYear[i], "-06-01")))
+    #   age <- years + (days/365)
+    # }
     
     player <- data.frame(Player = players$Player[i], DraftAge = age, Position = position)
     college_stats$season <- as.character(college_stats$season)
