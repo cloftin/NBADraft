@@ -1,11 +1,7 @@
-library(XML)
-library(DBI)
-library(dplyr)
-library(stringi)
-
+#' @export
 getSchoolStats <- function() {
   
-  cn <- dbConnect(RSQLite::SQLite(), "NBADraft.sqlite3")
+  cn <- dbConnect(RSQLite::SQLite(), "data/NBADraft.sqlite3")
   
   dat <- data.frame()
   for(i in 2002:2017) {

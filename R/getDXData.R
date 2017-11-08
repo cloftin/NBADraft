@@ -1,8 +1,7 @@
-library(XML)
-library(DBI)
-library(stringi)
-
+#' @export
 getDXData <- function() {
+  
+  cn <- dbConnect(RSQLite::SQLite(), "data/NBADraft.sqlite3")
   
   dat <- data.frame()
   for(i in 2002:2017) {
@@ -47,7 +46,7 @@ getDXData <- function() {
   colnames(dat) <- c("Name", "Team", "games", "min_g", "pts_g", "fga_g", "pts_play", "ts_pct", "efg_pct",
                      "fta_per_fga_pct", "fg3a_per_fga_pct", "ast_g", "ast_per_fga_pct", "ast_to_ratio",
                      "ppr", "blk_g", "stl_g", "pf_g", "Year")
-  cn <- dbConnect(RSQLite::SQLite(), "NBADraft.sqlite3")
+
   dbSendQuery(cn, "Drop table DXStats")
   dbWriteTable(cn, "DXStats", dat, row.names = F)
 }

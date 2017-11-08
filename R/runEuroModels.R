@@ -1,14 +1,10 @@
 
 #' @export
-runEuroModels <- function() {
-  options(scipen = 999)
+runEuroModels <- function(draftYearToTest = 2015, yearsToExclude = c(2015)) {
   
-  # source("seasonWeighting.R")
+  yearsToExclude <- unique(c(yearsToExclude, draftYearToTest))
   
-  draftYearToTest <- 2015
-  yearsToExclude <- c(draftYearToTest)
-  
-  cn <- dbConnect(RSQLite::SQLite(), "NBADraft.sqlite3")
+  cn <- dbConnect(RSQLite::SQLite(), "data/NBADraft.sqlite3")
   
   euroPlayers <- dbGetQuery(cn, "Select a.*, e.Rank, e.Year, 
                              d.Height, d.Weight, d.Wingspan

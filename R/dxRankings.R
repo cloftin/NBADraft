@@ -1,6 +1,5 @@
-library(XML)
-library(DBI)
 
+#' @export
 dxRankings <- function() {
   
   dat <- data.frame()
@@ -16,7 +15,7 @@ dxRankings <- function() {
   }
   dat$Player <- as.character(dat$Player)
   
-  cn <- dbConnect(RSQLite::SQLite(), "NBADraft.sqlite3")
+  cn <- dbConnect(RSQLite::SQLite(), "data/NBADraft.sqlite3")
   dbSendQuery(cn, "Drop Table DXRankings")
   dbWriteTable(cn, "DXRankings", dat)
 }

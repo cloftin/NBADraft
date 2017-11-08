@@ -4,7 +4,7 @@ runCollegeModels <- function(draftYearToTest = 2017, dx = F, yearsToExclude = c(
   
   yearsToExclude <- unique(c(yearsToExclude, draftYearToTest, 2016))
   
-  cn <- dbConnect(RSQLite::SQLite(), "NBADraft.sqlite3")
+  cn <- dbConnect(RSQLite::SQLite(), "data/NBADraft.sqlite3")
   
   if(dx) {
     collegePlayers <- dbGetQuery(cn, "Select a.*, b.*, e.draftAge, e.Position, c.School, c.SchoolSRS, c.SchoolSOS, d.Rank

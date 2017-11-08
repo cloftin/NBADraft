@@ -1,10 +1,7 @@
-library(XML)
-library(DBI)
-library(dplyr)
-
+#' @export
 getConferenceStats <- function() {
   
-  cn <- dbConnect(RSQLite::SQLite(), "NBADraft.sqlite3")
+  cn <- dbConnect(RSQLite::SQLite(), "data/NBADraft.sqlite3")
   
   lines <- readLines("http://www.sports-reference.com/cbb/conferences/") 
   lines <- lines[grep("conf_name", lines)]

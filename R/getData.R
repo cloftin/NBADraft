@@ -20,7 +20,7 @@ get_data <- function() {
     
     lines <- readLines(paste0("https://www.basketball-reference.com/draft/NBA_", i, ".html"))
     for(j in 1:nrow(temp)) {
-      print(j/nrow(temp))
+      print(paste0(i, ": ", j/nrow(temp)))
       page <- lines[grep(temp$Player[j], lines)]
       page <- strsplit(page, "a href=\\\"")[[1]]
       page <- page[grep(temp$Player[j], page)]
@@ -34,7 +34,7 @@ get_data <- function() {
   
   player_stats <- player_stats[which(substr(player_stats$link, nchar(player_stats$link) - 3, nchar(player_stats$link)) == "html"),]
   
-  cn <- dbConnect(RSQLite::SQLite(), "NBADraft.sqlite3")
+  cn <- dbConnect(RSQLite::SQLite(), "data/NBADraft.sqlite3")
   
   dbGetQuery(cn, "Drop Table PlayerStats")
   dbWriteTable(cn, "PlayerStats", player_stats)

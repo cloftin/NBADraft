@@ -1,5 +1,5 @@
-library(stringi)
 
+#' @export
 decimalLength <- function(length) {
   length <- stri_trim(length)
   length <- gsub("\\\"", "", length)

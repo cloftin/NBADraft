@@ -1,6 +1,6 @@
-Package: draftRtest
+Package: draftR
 Type: Package
-Title: What the Package Does (Title Case)
+Title: NBA Draft model package
 Version: 0.1.0
 Author: Colin Loftin
 Maintainer: Colin Loftin <ctloftin@ncsu.edu>

@@ -1,10 +1,6 @@
-
-
-# source("get_College_Data.R")
-
 #' @export
 getDraftClassData <- function() {
-  cn <- dbConnect(RSQLite::SQLite(), "NBADraft.sqlite3")
+  cn <- dbConnect(RSQLite::SQLite(), "data/NBADraft.sqlite3")
   players <- dbGetQuery(cn, "Select * from DraftProspects")
   players$isEuro <- grepl("basketball", players$Link)
   
