@@ -1,3 +1,4 @@
+#' @export
 seasonWeighting <- function(dat, invert = F, current = F) {
   colStart <- which(colnames(dat) == "DraftAge")
   if(current) {

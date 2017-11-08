@@ -2,8 +2,6 @@
 #' @export
 get_data <- function() {
   
-  # source("get_College_Data.R")
-  
   options(stringsAsFactors = F)
   
   draftYearToTest <- 2017

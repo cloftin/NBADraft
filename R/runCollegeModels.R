@@ -1,9 +1,4 @@
 
-
-options(scipen = 999)
-
-# source("seasonWeighting.R")
-
 #' @export
 runCollegeModels <- function(draftYearToTest = 2017, dx = F, yearsToExclude = c(2016), byPosition = F) {
   
