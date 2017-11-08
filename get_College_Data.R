@@ -10,26 +10,29 @@ get_Euro_PerGame <- function(link, seasons) {
   columns <- unlist(lapply(strsplit(columns, "\\\" scope"), head, 1))
   columns <- columns[-c(2)]
   
-  stats <- euro_stats[grep("full_table", euro_stats)]
-  stats <- lapply(strsplit(stats, "data-stat=\\\""), function(x) strsplit(x, split = "\\\" >"))
-  stats <- unlist(stats)
+  stats <- euro_stats[grep("data-stat=\"season\" ><a", euro_stats)]
   
-  season <- stats[grep("years", stats)]
-  season <- strsplit(season, ">") %>% lapply(., function(x) x[2]) %>% unlist()
-  season <- strsplit(season, "<") %>% lapply(., function(x) x[1]) %>% unlist()
+  stats <- lapply(stats, function(x) {unlist(lapply(strsplit(x, "data-stat=\\\""), function(x) strsplit(x, split = "\\\" >")))})
   
-  stats <- stats[-grep("a href", stats)]
-  stats <- stats[seq(2, length(stats), by = 2)]
-  stats <- stats[-c(1,2)]
-  if(length(grep("scope|lg_name_short", stats)) > 0) {
-    stats <- stats[-grep("scope|lg_name_short", stats)]
-  }
-  stats <- unlist(lapply(strsplit(stats, "<"), function(x) head(x, 1)))
-  stats <- data.frame(matrix(as.numeric(stats), nrow = seasons, byrow=T))
-  stats <- cbind(season, stats)
-  
-  colnames(stats) <- columns
-  
+  stats <- plyr::ldply(stats, function(x) {
+    x <- unlist(x)
+    season <- x[grep("years", x)]
+    season <- strsplit(season, ">") %>% lapply(., function(x) x[2]) %>% unlist()
+    season <- strsplit(season, "<") %>% lapply(., function(x) x[1]) %>% unlist()
+    
+    x <- x[-grep("a href", x)]
+    x <- x[seq(2, length(x), by = 2)]
+    x <- x[-c(1,2)]
+    if(length(grep("scope|lg_name_short", x)) > 0) {
+      x <- x[-grep("scope|lg_name_short", x)]
+    }
+    x <- unlist(lapply(strsplit(x, "<"), function(x) head(x, 1)))
+    x <- data.frame(matrix(as.numeric(x), nrow = 1, byrow=T))
+    x <- cbind(season, x)
+    
+    colnames(x) <- columns
+    return(x)
+  })
   return(stats)
 }
 
@@ -45,24 +48,28 @@ get_Euro_PerMinute <- function(link, seasons) {
   columns <- unlist(lapply(strsplit(columns, "\\\" scope"), head, 1))
   columns <- columns[-c(2)]
   
-  stats <- euro_stats[grep("full_table", euro_stats)]
-  stats <- lapply(strsplit(stats, "data-stat=\\\""), function(x) strsplit(x, split = "\\\" >"))
-  stats <- unlist(stats)
+  stats <- euro_stats[grep("data-stat=\"season\" ><a", euro_stats)]
+  stats <- lapply(stats, function(x) {unlist(lapply(strsplit(x, "data-stat=\\\""), function(x) strsplit(x, split = "\\\" >")))})
   
-  season <- stats[grep("years", stats)]
-  season <- strsplit(season, ">") %>% lapply(., function(x) x[2]) %>% unlist()
-  season <- strsplit(season, "<") %>% lapply(., function(x) x[1]) %>% unlist()
-  
-  stats <- stats[-grep("a href", stats)]
-  stats <- stats[seq(6, length(stats), by = 2)]
-  if(length(grep("scope|lg_name_short", stats)) > 0) {
-    stats <- stats[-grep("scope|lg_name_short", stats)]
-  }
-  stats <- unlist(lapply(strsplit(stats, "<"), function(x) head(x, 1)))
-  stats <- data.frame(matrix(as.numeric(stats), nrow = seasons, byrow=T))
-  stats <- cbind(season, stats)
-  
-  colnames(stats) <- columns
+  stats <- plyr::ldply(stats, function(x) {
+    x <- unlist(x)
+    season <- x[grep("years", x)]
+    season <- strsplit(season, ">") %>% lapply(., function(x) x[2]) %>% unlist()
+    season <- strsplit(season, "<") %>% lapply(., function(x) x[1]) %>% unlist()
+    
+    x <- x[-grep("a href", x)]
+    x <- x[seq(2, length(x), by = 2)]
+    x <- x[-c(1,2)]
+    if(length(grep("scope|lg_name_short", x)) > 0) {
+      x <- x[-grep("scope|lg_name_short", x)]
+    }
+    x <- unlist(lapply(strsplit(x, "<"), function(x) head(x, 1)))
+    x <- data.frame(matrix(as.numeric(x), nrow = 1, byrow=T))
+    x <- cbind(season, x)
+    
+    colnames(x) <- columns
+    return(x)
+  })
   
   return(stats)
 }
@@ -102,6 +109,7 @@ get_College_PerGame <- function(link, seasons) {
   for(j in 1:length(t)) {
     selection <- c(selection, t[[j]][which(t[[j]] <= (which(stats == "pts_per_g")[j] + 1))])
   }
+  selection <- c(selection, (grep("sos", stats) + 1))
   stats <- stats[selection]
   stats <- unlist(lapply(strsplit(stats, "<"), function(x) head(x, 1)))
   stats <- data.frame(matrix(as.numeric(stats), nrow = seasons, byrow=T))

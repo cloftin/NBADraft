@@ -11,12 +11,12 @@ source("get_College_Data.R")
 
 options(stringsAsFactors = F)
 
-draftYearToTest <- 2016
+draftYearToTest <- 2017
 
 player_stats <- data.frame()
 
 for(i in draftYearToTest:1980) {
-  temp <- readHTMLTable(paste0("http://www.basketball-reference.com/draft/NBA_", i, ".html"))$stats
+  temp <- readHTMLTable(rawToChar(GET(paste0("http://www.basketball-reference.com/draft/NBA_", i, ".html"))$content), stringsAsFactors = F)$stats
   temp <- temp[,-c(15:18)]
   temp <- temp %>% filter(Pk != "Pk")
   temp <- temp %>% filter(Pk != "")
@@ -25,14 +25,14 @@ for(i in draftYearToTest:1980) {
   temp$VORP <- as.numeric(temp$VORP)
   temp$link <- ""
   
-  lines <- readLines(paste0("http://www.basketball-reference.com/draft/NBA_", i, ".html"))
+  lines <- readLines(paste0("https://www.basketball-reference.com/draft/NBA_", i, ".html"))
   for(j in 1:nrow(temp)) {
     print(j/nrow(temp))
     page <- lines[grep(temp$Player[j], lines)]
     page <- strsplit(page, "a href=\\\"")[[1]]
     page <- page[grep(temp$Player[j], page)]
     page <- strsplit(page, ">")[[1]][1]
-    page <- paste0("http://www.basketball-reference.com", gsub("\\\"", "", page))
+    page <- paste0("https://www.basketball-reference.com", gsub("\\\"", "", page))
     temp$link[j] <- page
   }
   

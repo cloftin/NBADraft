@@ -12,7 +12,7 @@ source("seasonWeighting.R")
 
 runCollegeModels <- function(draftYearToTest = 2017, dx = F, yearsToExclude = c(2016), byPosition = F) {
   
-  yearsToExclude <- c(yearsToExclude, draftYearToTest, 2016)
+  yearsToExclude <- unique(c(yearsToExclude, draftYearToTest, 2016))
   
   cn <- dbConnect(RSQLite::SQLite(), "NBADraft.sqlite3")
   
