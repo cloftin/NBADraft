@@ -48,7 +48,7 @@ get_data <- function() {
   collegePlayers <- data.frame()
   
   player_stats$Amateur <- ""
-  for(i in 1:nrow(player_stats)) {
+  for(i in 2001:nrow(player_stats)) {
     print(paste0(i, ": ", player_stats$Player[i]))
     lines <- readLines(player_stats$link[i])
     position <- stri_trim(lines[grep(pattern = "Position:", lines) + 2])
@@ -78,8 +78,8 @@ get_data <- function() {
           seasons <- w - 1
         }
         
-        per_game <- get_Euro_PerGame(college, seasons)
-        per_minute <- get_Euro_PerMinute(college, seasons)
+        per_game <- draftR::get_Euro_PerGame(college, seasons)
+        per_minute <- draftR::get_Euro_PerMinute(college, seasons)
         
         games <- per_game$g
         
@@ -157,7 +157,7 @@ get_data <- function() {
       
       player <- data.frame(Player = player_stats$Player[i], DraftAge = age, Position = position)
       
-      college_stats$Year <- 2000 + as.integer(substr(college_stats$season, nchar(college_stats$season) - 1, nchar(college_stats$season)))
+      college_stats$Year <- 1 + as.integer(substr(college_stats$season, 1, 4))
       if(isEuro) {
         t <- tryCatch(bind_rows(euroPlayers, cbind(player, college_stats)), error = function(e) {
           e
@@ -167,25 +167,34 @@ get_data <- function() {
         } else {
           euroPlayers <- t
         }
-      }
-    } else {
-      t <- tryCatch(bind_rows(collegePlayers, cbind(player, college_stats)), error = function(e) {
-        e
-      })
-      if(inherits(t, "error")) {
-        next
       } else {
-        collegePlayers <- t
-      } 
-    }
+        t <- tryCatch(bind_rows(collegePlayers, cbind(player, college_stats)), error = function(e) {
+          e
+        })
+        if(inherits(t, "error")) {
+          next
+        } else {
+          collegePlayers <- t
+        } 
+      }
+    } 
   }
   
-  
+  setnames(collegePlayers, "player_stats$link[i]", "link")
+  setnames(euroPlayers, "player_stats$link[i]", "link")
   
   collegePlayers <- merge(player_stats, collegePlayers, by="link") %>% .[order(-.$VORP),]
   euroPlayers <- merge(player_stats, euroPlayers, by="link") %>% .[order(-.$VORP),]
   
+  collegePlayers$Player.y <- NULL
+  collegePlayers$g <- NULL
+  collegePlayers$gs <- NULL
+  setnames(collegePlayers, "Player.x", "Player")
   
+  euroPlayers$Player.y <- NULL
+  euroPlayers$g <- NULL
+  euroPlayers$gs <- NULL
+  setnames(euroPlayers, "Player.x", "Player")
   
   write.csv(collegePlayers, file = "college_players.csv", row.names = F)
   write.csv(euroPlayers, file = "euro_players.csv", row.names = F)

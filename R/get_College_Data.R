@@ -11,6 +11,7 @@ get_Euro_PerGame <- function(link, seasons) {
   columns <- unlist(lapply(strsplit(columns, "data-stat=\\\""), tail, 1))
   columns <- unlist(lapply(strsplit(columns, "\\\" scope"), head, 1))
   columns <- columns[-c(2)]
+  # columns <- columns[!is.element(columns, c("lg_name"))]
   
   stats <- euro_stats[grep("data-stat=\"season\" ><a", euro_stats)]
   
@@ -23,8 +24,12 @@ get_Euro_PerGame <- function(link, seasons) {
     season <- strsplit(season, "<") %>% lapply(., function(x) x[1]) %>% unlist()
     
     x <- x[-grep("a href", x)]
+    x <- x[-grep("<tr ><th scope=\"row\" class=\"left \" ", x)]
+    x <- x[!is.element(x, c("season"))]
+    x <- x[!is.element(x, c("team_name_season"))]
+    columns <- c("season", x[seq(1, length(x), by = 2)])
     x <- x[seq(2, length(x), by = 2)]
-    x <- x[-c(1,2)]
+    # x <- x[-c(1,2)]
     if(length(grep("scope|lg_name_short", x)) > 0) {
       x <- x[-grep("scope|lg_name_short", x)]
     }
@@ -33,6 +38,7 @@ get_Euro_PerGame <- function(link, seasons) {
     x <- cbind(season, x)
     
     colnames(x) <- columns
+    x$lg_name <- NULL
     return(x)
   })
   return(stats)
@@ -61,8 +67,12 @@ get_Euro_PerMinute <- function(link, seasons) {
     season <- strsplit(season, "<") %>% lapply(., function(x) x[1]) %>% unlist()
     
     x <- x[-grep("a href", x)]
+    x <- x[-grep("<tr ><th scope=\"row\" class=\"left \" ", x)]
+    x <- x[!is.element(x, c("season"))]
+    x <- x[!is.element(x, c("team_name_season"))]
+    columns <- c("season", x[seq(1, length(x), by = 2)])
     x <- x[seq(2, length(x), by = 2)]
-    x <- x[-c(1,2)]
+    # x <- x[-c(1,2)]
     if(length(grep("scope|lg_name_short", x)) > 0) {
       x <- x[-grep("scope|lg_name_short", x)]
     }
@@ -71,6 +81,7 @@ get_Euro_PerMinute <- function(link, seasons) {
     x <- cbind(season, x)
     
     colnames(x) <- columns
+    x$lg_name <- NULL
     return(x)
   })
   

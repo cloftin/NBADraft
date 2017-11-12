@@ -1,6 +1,6 @@
 
 #' @export
-runCollegeModels <- function(draftYearToTest = 2017, dx = F, yearsToExclude = c(2016), byPosition = F) {
+runCollegeModels <- function(draftYearToTest = 2016, dx = F, yearsToExclude = c(2016), byPosition = F) {
   
   yearsToExclude <- unique(c(yearsToExclude, draftYearToTest, 2016))
   
@@ -56,10 +56,11 @@ runCollegeModels <- function(draftYearToTest = 2017, dx = F, yearsToExclude = c(
     collegePlayers$MP <- as.numeric(collegePlayers$MP)
     collegePlayers <- collegePlayers[order(-collegePlayers$draftYear, collegePlayers$Player, -collegePlayers$Year),]
     
-    colnames(collegePlayers)[1] <- "PlayerTemp"
-    collegePlayers[,ncol(collegePlayers)] <- NULL
+    # colnames(collegePlayers)[1] <- "PlayerTemp"
+    # collegePlayers[,ncol(collegePlayers)] <- NULL
     collegePlayers$Player <- NULL
-    colnames(collegePlayers)[1] <- "Player"
+    collegePlayers$Year <- NULL
+    # colnames(collegePlayers)[1] <- "Player"
     
     test <- collegePlayers %>% filter(draftYear == draftYearToTest)
     

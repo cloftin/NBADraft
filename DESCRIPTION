@@ -10,13 +10,13 @@ LazyData: true
 RoxygenNote: 6.0.1
 Depends: XML,
         httr,
-        dplyr,
+        plyr,
         lubridate,
         rvest,
         stringi,
         randomForest,
         RSQLite,
         DBI,
-        plyr,
+        dplyr,
         ggplot2,
         tidyr
