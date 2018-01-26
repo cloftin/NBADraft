@@ -1,0 +1,70 @@
+Player	Pos	Team	Age	Height	Wingspan
+1. Luka Doncic	PG	Real Madrid	18.8	6-8	N/A
+2. Deandre Ayton	C	Arizona	19.4	7-0	7-5
+3. Marvin Bagley III	PF/C	Duke	18.8	6-11	7-0½
+4. Mohamed Bamba	C	Texas	19.6	7-0	7-9
+5. Michael Porter Jr.	SF/PF	Missouri	19.5	6-10	7-0
+6. Collin Sexton	PG	Alabama	19.0	6-2	6-7
+7. Trae Young	PG	Oklahoma	19.3	6-2	6-4
+8. Jaren Jackson Jr.	PF/C	Michigan St	18.3	6-10	7-4
+9. Miles Bridges	SF/PF	Michigan St	19.8	6-6	6-9
+10. Mikal Bridges	SF	Villanova	21.3	6-7	7-1½
+11. Robert Williams	PF/C	Texas A&M	20.2	6-9	7-5½
+12. Kevin Knox	SF/PF	Kentucky	18.4	6-9	7-0
+13. Dzanan Musa	SF	Cedevita	18.6	6-9	6-8½
+14. Bruce Brown	SG	Miami FL	21.4	6-3	6-8½
+15. Troy Brown	SG	Oregon	18.4	6-7	7-6
+16. Lonnie Walker IV	SG	Miami FL	19.0	6-4	6-10½
+17. Wendell Carter Jr.	C	Duke	18.7	6-10	7-3
+18. Anfernee Simons	SG	Team Breakdown	18.5	6-4	6-7
+19. Hamidou Diallo	SG	Kentucky	19.4	6-5	7-0
+20. Mitchell Robinson	C	N/A	19.7	6-11	7-4
+21. Trevon Duval	PG	Duke	19.4	6-3	6-3½
+22. Shai Gilgeous-Alexander	PG/SG	Kentucky	19.5	6-6	7-0
+23. Shake Milton	PG/SG	SMU	21.2	6-6	6-8
+24. De'Anthony Melton	PG/SG	USC	19.6	6-3	6-8
+25. Grayson Allen	SG	Duke	22.2	6-4	6-6½
+26. Brandon McCoy	C	UNLV	19.5	6-11	7-1½
+27. Khyri Thomas	SG	Creighton	21.6	6-3	N/A
+28. Keita Bates-Diop	SF	Ohio St	21.9	6-7	N/A
+29. Justin Jackson	SF/PF	Maryland	20.8	6-7	#N/A
+30. Jarrey Foster	SG	SMU	21.0	6-6	N/A
+31. Jalen Hudson	SG	Florida	21.6	6-5	N/A
+32. Daniel Gafford	PF/C	Arkansas	19.2	6-11	7-2
+33. Chimezie Metu	PF/C	USC	20.8	6-10	6-10½
+34. Jevon Carter	PG	West Virginia	22.3	6-2	6-3
+35. Chandler Hutchison	SG	Boise St	21.7	6-7	N/A
+36. Jontay Porter	C	Missouri	18.1	6-10	7-0
+37. Markus Howard	PG	Marquette	18.8	6-0	6-0
+38. Landry Shamet	PG	Wichita St	20.8	6-4	N/A
+39. Marko Simonovic	PF/C	Siena	18.2	7-0	N/A
+40. Nickeil Alexander-Walker	PG	Virginia Tech	19.3	6-5	6-9
+41. Austin Wiley	C	Auburn	19.0	6-11	7-5
+42. Rodions Kurucs	SF/PF	Barcelona	19.9	6-10	N/A
+43. Aaron Holiday	PG	UCLA	21.2	6-1	6-6
+44. Goga Bitadze	C	Mega Bemax	18.4	6-11	7-2
+45. Tyus Battle	SG/SF	Syracuse	20.2	6-7	6-8
+46. O'Shae Brissett	PF	Syracuse	19.5	6-9	6-11
+47. Devonte' Graham	PG	Kansas	22.8	6-2	N/A
+48. Rawle Alkins	SG	Arizona	20.2	6-5	6-9
+49. Andrew Jones	PG/SG	Texas	20.0	6-4	6-6½
+50. Jarred Vanderbilt	SF	Kentucky	18.7	6-8	7-1
+51. Nick Richards	C	Kentucky	20.1	6-11	7-5
+52. PJ Washington	PF	Kentucky	19.3	6-8	7-3
+53. Brian Bowen	SF	N/A	19.2	6-7	6-9
+54. Arnoldas Kulboka	SF	Capo D'Orlando	20.0	6-10	6-11
+55. Bonzie Colson	PF	Notre Dame	21.9	6-5	6-11½
+56. Kevin Hervey	SF	Texas Arlington	21.5	6-7	N/A
+57. Isaac Bonga	SF	Frankfurt	18.1	6-9	7-0
+58. Alize Johnson	PF	Missouri St	21.7	6-9	N/A
+59. Allonzo Trier	SG	Arizona	21.9	6-5	6-7
+60. Lagerald Vick	SF	Kansas	20.9	6-5	N/A
+61. Aleksa Radanov	SG	FMP	19.9	6-8	N/A
+62. Tony Carr	PG	Penn St	20.2	6-3	6-8
+63. Sviatoslav Mykhailiuk	SG	Kansas	20.5	6-8	6-5
+64. Ethan Happ	PF/C	Wisconsin	21.6	6-10	N/A
+65. Vincent Edwards	SF	Purdue	21.7	6-8	7-0
+66. Jacob Evans	SF	Cincinnati	20.5	6-6	N/A
+67. Terence Davis	SG	Mississippi	20.6	6-4	N/A
+68. Tryggvi Hlinason	C	Valencia	20.2	7-1	N/A
+69. Jalen Brunson	PG	Villanova	21.3	6-2	6-3½

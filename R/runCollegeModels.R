@@ -1,8 +1,9 @@
 
 #' @export
-runCollegeModels <- function(draftYearToTest = 2016, dx = F, yearsToExclude = c(2016), byPosition = F) {
+runCollegeModels <- function(draftYearToTest = 2018, dx = F, yearsToExclude = c(2017), 
+                             shooting = F, includeRank = T, byPosition = F) {
   
-  yearsToExclude <- unique(c(yearsToExclude, draftYearToTest, 2016))
+  yearsToExclude <- unique(c(yearsToExclude, draftYearToTest, 2017))
   
   cn <- dbConnect(RSQLite::SQLite(), "data/NBADraft.sqlite3")
   
@@ -62,15 +63,16 @@ runCollegeModels <- function(draftYearToTest = 2016, dx = F, yearsToExclude = c(
     collegePlayers$Year <- NULL
     # colnames(collegePlayers)[1] <- "Player"
     
-    test <- collegePlayers %>% filter(draftYear == draftYearToTest)
-    
-    test <- test %>% select(Player, Position, MP, VORP, season, Rank, games, DraftAge, ft_pct,
-                            ast_per_poss, stl_per_poss, blk_per_poss, blk_pct, fg3a_per_fga_pct, fta_per_fga_pct,
-                            tov_pct, usg_pct, SchoolSOS, TS, eFG, ShotsAtRim, FGPerAtRim, PerAssistedAtRim,
-                            PerShotsAs2PtJ, FGPerOn2PtJ, PerAssisted2PtJ, PerShots3PtJ, FGPerOn3PtJ,
-                            PerAssisted3PtJ, FTAPerFGA, FTPer)
-    # test$fg3_pct[is.na(test$fg3_pct)] <- 0
-    
+    if(draftYearToTest != 2018) {
+      test <- collegePlayers %>% filter(draftYear == draftYearToTest)
+      
+      test <- test %>% select(Player, Position, MP, VORP, season, Rank, games, DraftAge, ft_pct,
+                              ast_per_poss, stl_per_poss, blk_per_poss, blk_pct, fg3a_per_fga_pct, fta_per_fga_pct,
+                              tov_pct, usg_pct, SchoolSOS, TS, eFG, ShotsAtRim, FGPerAtRim, PerAssistedAtRim,
+                              PerShotsAs2PtJ, FGPerOn2PtJ, PerAssisted2PtJ, PerShots3PtJ, FGPerOn3PtJ,
+                              PerAssisted3PtJ, FTAPerFGA, FTPer)
+      # test$fg3_pct[is.na(test$fg3_pct)] <- 0
+    }
     train <- collegePlayers %>% filter(!is.na(VORP) & !(draftYear %in% yearsToExclude))
     train <- train %>% select(Player, Position, MP, VORP, season, Rank, games, DraftAge, ft_pct,
                               ast_per_poss, stl_per_poss, blk_per_poss, blk_pct, fg3a_per_fga_pct, fta_per_fga_pct,
@@ -82,30 +84,27 @@ runCollegeModels <- function(draftYearToTest = 2016, dx = F, yearsToExclude = c(
   }
   
   
-  if(draftYearToTest == 2017) {
-    test <- dbGetQuery(cn, "Select a.*, d.Rank, b.Season, b.ConfSRS, b.ConfSOS,
-                               c.School, c.SchoolSRS, c.SchoolSOS, e.*
+  if(draftYearToTest == 2018) {
+    test <- dbGetQuery(cn, "Select a.*, b.Season, b.ConfSRS, b.ConfSOS,
+                               c.School, c.SchoolSRS, c.SchoolSOS--, e.*
                    from CollegeDraftProspects a
                    inner join ConferenceStats b
                    inner join SchoolStats c
-                   inner join DXRankings d
-                   inner join ShotData e
+                   --inner join DXRankings d
+                   --inner join ShotData e
                    on a.conf_link = b.ConfLink
                    and a.school_link = c.school_link
-                   and a.Player = d.Player
-                   and a.Player = e.Player
-                   and a.Year = e.Year
-                   order by d.Rank asc")
-    colnames(test)[1] <- "PlayerTemp"
-    test[,ncol(test)] <- NULL
-    test$Player <- NULL
-    colnames(test)[1] <- "Player"
+                   --and a.Player = d.Player
+                   --and a.Player = e.Player
+                   --and a.Year = e.Year
+                   --order by d.Rank asc")
     
-    test <- test %>% select(Player, Position, season, Rank, games, DraftAge, ft_pct,
+    test <- test %>% select(Player, Position, season, games, DraftAge, ft_pct,
                             ast_per_poss, stl_per_poss, blk_per_poss, blk_pct, fg3a_per_fga_pct, fta_per_fga_pct,
-                            tov_pct, usg_pct, SchoolSOS, TS, eFG, ShotsAtRim, FGPerAtRim, PerAssistedAtRim,
-                            PerShotsAs2PtJ, FGPerOn2PtJ, PerAssisted2PtJ, PerShots3PtJ, FGPerOn3PtJ,
-                            PerAssisted3PtJ, FTAPerFGA, FTPer)
+                            tov_pct, usg_pct, SchoolSOS)
+    # , TS, eFG, ShotsAtRim, FGPerAtRim, PerAssistedAtRim,
+    # PerShotsAs2PtJ, FGPerOn2PtJ, PerAssisted2PtJ, PerShots3PtJ, FGPerOn3PtJ,
+    # PerAssisted3PtJ, FTAPerFGA, FTPer)
     # test$fg3_pct[is.nan(test$fg3_pct)] <- 0
     # test$fg3_pct[is.na(test$fg3_pct)] <- 0
     
@@ -116,11 +115,9 @@ runCollegeModels <- function(draftYearToTest = 2016, dx = F, yearsToExclude = c(
   train$Position[grepl("Guard", train$Position)] <- "Guard"
   train$Position[grepl("Forward", train$Position)] <- "Forward"
   
-  test$Position[grepl("Center", test$Position)] <- "Center"
-  test$Position <- unlist(lapply(strsplit(test$Position, " and "), function(x) {head(x,1)}))
-  test$Position[grepl("Guard", test$Position)] <- "Guard"
-  test$Position[grepl("Forward", test$Position)] <- "Forward"
-  
+  test$Position[grep("^C$", test$Position)] <- "Center"
+  test$Position[grep("PF|SF", test$Position)] <- "Forward"
+  test$Position[grep("G", test$Position)] <- "Guard"
   
   if(draftYearToTest == 2015) {
     test <- test %>% filter(Player != "Marcus Thornton")
@@ -128,11 +125,12 @@ runCollegeModels <- function(draftYearToTest = 2016, dx = F, yearsToExclude = c(
   test <- ldply(unique(test$Player), function(x) {
     return(seasonWeighting(test %>% filter(Player == x), F, F))
   })
-  test$FGPerOn3PtJ[is.nan(test$FGPerOn3PtJ)] <- 0
-  test$PerAssisted3PtJ[is.nan(test$PerAssisted3PtJ)] <- 0
-  
-  try(test <- test[order(-test$VORP),])
-  rownames(test) <- c(1:nrow(test))
+  if(shooting) {
+    test$FGPerOn3PtJ[is.nan(test$FGPerOn3PtJ)] <- 0
+    test$PerAssisted3PtJ[is.nan(test$PerAssisted3PtJ)] <- 0
+  }
+  # try(test <- test[order(-test$VORP),])
+  # rownames(test) <- c(1:nrow(test))
   
   
   train <- ldply(unique(train$Player), function(x) {
@@ -158,6 +156,16 @@ runCollegeModels <- function(draftYearToTest = 2016, dx = F, yearsToExclude = c(
   test_temp <- test
   
   results <- data.frame()
+  
+  if(!includeRank) {
+    train$Rank <- NULL
+  }
+  
+  if(!shooting) {
+    train <- train %>% select(Player, Position, MP, VORP, season, DraftAge, ft_pct, 
+                              ast_per_poss, stl_per_poss, blk_per_poss, blk_pct, 
+                              fg3a_per_fga_pct, fta_per_fga_pct, tov_pct, usg_pct, SchoolSOS)
+  }
   
   if(byPosition) {
     
@@ -197,11 +205,11 @@ runCollegeModels <- function(draftYearToTest = 2016, dx = F, yearsToExclude = c(
       results <- rbind(results, test)
     }
   } else {
-    Ranks_RF <- paste0("ranksRF <- randomForest(VORP/MP ~ ", 
-                       paste(colnames(train)[c(colStart:ncol(train))], collapse = " + "), 
+    Ranks_RF <- paste0("ranksRF <- randomForest(VORP/MP ~ Rank + ", 
+                       paste(colnames(train)[c((colStart + 1):ncol(train))], collapse = " + "), 
                        ", data = train, na.action = na.roughfix)")
     Ranks_LM <- paste0("ranksLM <- lm(VORP/MP ~ ", 
-                       paste(colnames(train)[c(colStart:ncol(train))], collapse = " + "), 
+                       paste(colnames(train)[c((colStart + 1):ncol(train))], collapse = " + "), 
                        ", data = train)")
     
     Stats_RF <- paste0("statsRF <- randomForest(VORP/MP ~ ", 

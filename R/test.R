@@ -1,3 +1,3 @@
 # source("runCollegeModels.R")
 
-runCollegeModels(2012, byPosition = F)
+# runCollegeModels(draftYearToTest = 2018, dx = F, byPosition = T, shooting = F, includeRank = F)

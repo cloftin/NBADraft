@@ -118,14 +118,15 @@ get_College_PerGame <- function(link, seasons) {
   conf_link <- unlist(lapply(stats[grep("conferences", stats)], function(x) strsplit(x, "href=\\\"")[[1]][2]))
   conf_link <- unlist(lapply(conf_link, function(x) strsplit(x, "\\\"")[[1]][1]))
   
-  stats <- stats[-grep("a href|full_table|season|age|team_id|lg_id|pos|school_name|conf_abbr|left|players_per_game|zzz", stats)]
+  stats <- stats[-grep("a href|full_table|season|age|team_id|lg_id|pos|school_name|conf_abbr|left|players_per_game|zzz|awards-dum", stats)]
   t <- lapply(which(stats == "g"), function(x) seq(x + 1, length(stats), by = 2))
   selection <- c()
   for(j in 1:length(t)) {
     selection <- c(selection, t[[j]][which(t[[j]] <= (which(stats == "pts_per_g")[j] + 1))])
   }
   selection <- c(selection, (grep("sos", stats) + 1))
-  stats <- stats[selection]
+  # stats <- stats[selection]
+  stats <- stats[seq(2, length(stats), by = 2)]
   stats <- unlist(lapply(strsplit(stats, "<"), function(x) head(x, 1)))
   stats <- data.frame(matrix(as.numeric(stats), nrow = seasons, byrow=T))
   stats <- cbind(season, stats)
